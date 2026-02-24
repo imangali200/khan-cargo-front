@@ -100,7 +100,7 @@
 
 <script setup lang="ts">
 definePageMeta({
-    layout: 'admin'
+    layout: 'superAdmin'
 })
 
 import { useToast } from '~/composables/useToast'

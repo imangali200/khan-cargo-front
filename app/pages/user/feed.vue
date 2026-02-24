@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({
-    layout: 'post'
+    layout: 'user'
 })
 
 interface Author {

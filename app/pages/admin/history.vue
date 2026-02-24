@@ -111,7 +111,7 @@
 
 <script setup lang="ts">
 definePageMeta({
-    layout: 'warehouse'
+    layout: 'admin'
 })
 
 const activeTab = ref('all')

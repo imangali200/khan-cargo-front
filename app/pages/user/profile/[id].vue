@@ -2,7 +2,7 @@
 import { useToast } from '~/composables/useToast'
 
 definePageMeta({
-    layout: 'default'
+    layout: 'user'
 })
 
 interface Author {

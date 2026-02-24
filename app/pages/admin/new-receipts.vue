@@ -1,5 +1,92 @@
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useToast } from '~/composables/useToast'
+
+definePageMeta({
+    layout: 'admin'
+})
+
+const toast = useToast()
+const { $axios } = useNuxtApp()
+const token = useCookie('token')
+
+const scannerInput = ref<HTMLInputElement | null>(null)
+const scannerCode = ref('')
+const manualCode = ref('')
+const loading = ref(false)
+
+interface AddedProduct {
+  trackCode: string
+  status: string
+  success: boolean
+}
+
+const addedProducts = ref<AddedProduct[]>([])
+
+onMounted(() => {
+  scannerInput.value?.focus()
+})
+
+const handleScannerInput = async () => {
+  if (!scannerCode.value.trim()) return
+  
+  await addProduct(scannerCode.value.trim())
+  scannerCode.value = ''
+  scannerInput.value?.focus()
+}
+
+const addManualCode = async () => {
+  if (!manualCode.value.trim()) return
+  
+  await addProduct(manualCode.value.trim())
+  manualCode.value = ''
+}
+
+const addProduct = async (trackCode: string) => {
+  loading.value = true
+  
+  try {
+    await $axios.post(
+      '/admin/tracks',
+      { productId: trackCode },
+      {
+        headers: {
+          Authorization: `Bearer ${token.value}`
+        }
+      }
+    )
+    
+    addedProducts.value.unshift({
+      trackCode,
+      status: 'Добавлено',
+      success: true
+    })
+    
+    toast.success(`Товар ${trackCode} добавлен!`, { position: 'top-center' })
+    
+  } catch (err: any) {
+    const errorMessage = err.response?.data?.message || 'Ошибка'
+    
+    addedProducts.value.unshift({
+      trackCode,
+      status: errorMessage,
+      success: false
+    })
+    
+    toast.error(`Ошибка: ${errorMessage}`, { position: 'top-center' })
+  } finally {
+    loading.value = false
+  }
+}
+
+const finishScanning = () => {
+  const successCount = addedProducts.value.filter(p => p.success).length
+  toast.success(`Сканирование завершено. Добавлено: ${successCount} товаров`, { position: 'top-center' })
+}
+</script>
+
 <template>
-  <div class="tw-py-6 animate-fadeIn">
+  <div>
     <!-- Header -->
     <div class="tw-mb-6">
       <div class="tw-flex tw-items-center tw-gap-2 tw-text-sm tw-mb-4">
@@ -134,94 +221,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-definePageMeta({
-    layout: 'warehouse',
-    middleware: 'auth'
-})
-
-import { ref, onMounted } from 'vue'
-import { useToast } from '~/composables/useToast'
-
-const toast = useToast()
-const { $axios } = useNuxtApp()
-const token = useCookie('token')
-
-const scannerInput = ref<HTMLInputElement | null>(null)
-const scannerCode = ref('')
-const manualCode = ref('')
-const loading = ref(false)
-
-interface AddedProduct {
-  trackCode: string
-  status: string
-  success: boolean
-}
-
-const addedProducts = ref<AddedProduct[]>([])
-
-onMounted(() => {
-  scannerInput.value?.focus()
-})
-
-const handleScannerInput = async () => {
-  if (!scannerCode.value.trim()) return
-  
-  await addProduct(scannerCode.value.trim())
-  scannerCode.value = ''
-  scannerInput.value?.focus()
-}
-
-const addManualCode = async () => {
-  if (!manualCode.value.trim()) return
-  
-  await addProduct(manualCode.value.trim())
-  manualCode.value = ''
-}
-
-const addProduct = async (trackCode: string) => {
-  loading.value = true
-  
-  try {
-    await $axios.post(
-      '/admin/tracks',
-      { productId: trackCode },
-      {
-        headers: {
-          Authorization: `Bearer ${token.value}`
-        }
-      }
-    )
-    
-    addedProducts.value.unshift({
-      trackCode,
-      status: 'Добавлено',
-      success: true
-    })
-    
-    toast.success(`Товар ${trackCode} добавлен!`, { position: 'top-center' })
-    
-  } catch (err: any) {
-    const errorMessage = err.response?.data?.message || 'Ошибка'
-    
-    addedProducts.value.unshift({
-      trackCode,
-      status: errorMessage,
-      success: false
-    })
-    
-    toast.error(`Ошибка: ${errorMessage}`, { position: 'top-center' })
-  } finally {
-    loading.value = false
-  }
-}
-
-const finishScanning = () => {
-  const successCount = addedProducts.value.filter(p => p.success).length
-  toast.success(`Сканирование завершено. Добавлено: ${successCount} товаров`, { position: 'top-center' })
-}
-</script>
 
 <style scoped>
 .animate-fadeIn {

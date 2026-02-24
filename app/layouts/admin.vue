@@ -2,16 +2,16 @@
     <div class="admin-app">
         <header class="admin-header">
             <div class="admin-header-content">
-                <router-link to="/superAdmin" class="admin-logo">
-                     <span class="logo-text">SuperAdmin</span>
+                <router-link to="/admin" class="admin-logo">
+                     <span class="logo-text">👨‍💼 Admin</span>
                  </router-link>
                 
                 <!-- Desktop Navigation -->
                 <nav class="admin-nav desktop-nav">
-                    <router-link to="/superAdmin" class="nav-link">Главная</router-link>
-                    <router-link to="/superAdmin/users" class="nav-link">Пользователи</router-link>
-                    <router-link to="/superAdmin/history" class="nav-link">История</router-link>
-                    <router-link to="/superAdmin/warehouses" class="nav-link">Склады</router-link>
+                    <router-link to="/admin" class="nav-link">Главная</router-link>
+                    <router-link to="/admin/history" class="nav-link">История</router-link>
+                    <router-link to="/admin/import" class="nav-link">Импорт</router-link>
+                    <router-link to="/admin/new-receipts" class="nav-link">Новые поступления</router-link>
                 </nav>
                 
                 <button @click="logout" class="logout-btn desktop-logout">Выйти</button>
@@ -30,21 +30,21 @@
             <!-- Mobile Menu -->
             <div v-if="menuOpen" class="mobile-menu">
                 <nav class="mobile-nav">
-                    <router-link to="/superAdmin" class="mobile-link" @click="menuOpen = false">
+                    <router-link to="/admin" class="mobile-link" @click="menuOpen = false">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
                         Главная
                     </router-link>
-                    <router-link to="/superAdmin/users" class="mobile-link" @click="menuOpen = false">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        Пользователи
+                    <router-link to="/admin/history" class="mobile-link" @click="menuOpen = false">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.313m0 0a2 2 0 0 0-1.172-1.778l-2.468-1.115a2 2 0 0 0-2.72 2.393v15.5"/></svg>
+                        История
                     </router-link>
-                    <router-link to="/superAdmin/tracks" class="mobile-link" @click="menuOpen = false">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                        Треки
+                    <router-link to="/admin/import" class="mobile-link" @click="menuOpen = false">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Импорт
                     </router-link>
-                    <router-link to="/superAdmin/warehouses" class="mobile-link" @click="menuOpen = false">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                        Склады
+                    <router-link to="/admin/new-receipts" class="mobile-link" @click="menuOpen = false">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                        Новые поступления
                     </router-link>
                 </nav>
                 <button @click="logout" class="mobile-logout">
@@ -82,7 +82,8 @@ watch(() => router.currentRoute.value.path, () => {
 .admin-app {
     min-height: 100vh;
     width: 100%;
-    background: #0a0a0a;
+    background: linear-gradient(135deg, #1a2332 0%, #223451 100%);
+    color: #fff;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -90,8 +91,9 @@ watch(() => router.currentRoute.value.path, () => {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: #000;
-    border-bottom: 1px solid #222;
+    background: rgba(26, 35, 50, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
 }
 
 .admin-header-content {
