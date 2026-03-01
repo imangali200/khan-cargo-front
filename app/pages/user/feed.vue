@@ -3,77 +3,55 @@ definePageMeta({
     layout: 'user'
 })
 
-interface Author {
-    id: number;
-    name: string;
-    surname: string;
-    code: string;
-    phoneNumber: string;
-}
+import type { Post, User } from '~/types'
 
-interface Comment {
-    id: number;
-    text: string;
-    createAt: string;
-    author?: Author;
-}
+const api = useApi()
+const token = useCookie('token')
 
-interface Post {
-    id: number;
-    link: string;
-    review: string;
-    imgUrl?: string;
-    likesCount: number;
-    isLiked: boolean;
-    createAt: string;
-    author: Author;
-    comments?: Comment[];
-}
-
-const posts = ref<Post[]>([
-    {
-        id: 1,
-        link: 'https://wildberries.ru/catalog/123/detail.aspx',
-        review: 'Эти кроссовки просто огонь! 🔥 Заказал через Ai-Cargo, приехали за неделю.',
-        imgUrl: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=800&auto=format&fit=crop',
-        likesCount: 1240,
-        isLiked: true,
-        createAt: new Date().toISOString(),
-        author: { id: 101, name: 'Александр', surname: 'Ким', code: 'Ai-123', phoneNumber: '' },
-        comments: [
-            { id: 1, text: 'Где брал?', createAt: new Date().toISOString(), author: { id: 102, name: 'Мария', surname: '', code: 'Ai-999', phoneNumber: '' } }
-        ]
-    },
-    {
-        id: 2,
-        link: 'https://amazon.com',
-        review: 'Новый iPhone 15 Pro. Камера просто нереальная. Доставка в Алматы очень быстрая.',
-        imgUrl: 'https://images.unsplash.com/photo-1696446701796-da61225697cc?w=800&auto=format&fit=crop',
-        likesCount: 850,
-        isLiked: false,
-        createAt: new Date().toISOString(),
-        author: { id: 103, name: 'Дамир', surname: 'С.', code: 'Ai-777', phoneNumber: '' },
-        comments: []
-    },
-    {
-        id: 3,
-        link: 'https://ozon.ru',
-        review: 'Клавиатура Keychron. Тайпинг одно удовольствие! Рекомендую всем.',
-        imgUrl: 'https://images.unsplash.com/photo-1595225476474-87563907a212?w=800&auto=format&fit=crop',
-        likesCount: 420,
-        isLiked: false,
-        createAt: new Date().toISOString(),
-        author: { id: 104, name: 'Анна', surname: 'Ли', code: 'Ai-555', phoneNumber: '' }
-    }
-])
-
-const loading = ref(false)
-const currentUser = ref<Author | null>({ id: 1, name: 'Вы', surname: '(Тест)', code: 'Ai-123', phoneNumber: '' })
+const posts = ref<Post[]>([])
+const loading = ref(true)
+const currentUser = ref<User | null>(null)
 const feedMode = ref<'trending' | 'recent'>('trending')
 const showComments = ref(false)
 const newComment = ref('')
 const activePostId = ref<number | null>(null)
 const sendingComment = ref(false)
+const offset = ref(0)
+const limit = 20
+const hasMore = ref(true)
+
+async function loadFeed(isLoadMore = false) {
+    if (loading.value && isLoadMore) return
+    loading.value = true
+    try {
+        const { data } = await api.feed.getFeed({
+            page: Math.floor(offset.value / limit) + 1,
+            limit
+        })
+        const newBatch = data.data
+        if (newBatch.length < limit) hasMore.value = false
+
+        if (isLoadMore) {
+            posts.value = [...posts.value, ...newBatch]
+        } else {
+            posts.value = newBatch
+        }
+        offset.value += newBatch.length
+    } catch {
+        if (!isLoadMore) posts.value = []
+    } finally {
+        loading.value = false
+    }
+}
+
+async function loadUser() {
+    if (token.value) {
+        try {
+            const { data } = await api.profile.getProfile()
+            currentUser.value = data
+        } catch { }
+    }
+}
 
 const sortedPosts = computed(() => {
     if (feedMode.value === 'trending') {
@@ -108,9 +86,17 @@ function goToCommentAuthorProfile(userId: number) {
     useRouter().push(`/user/profile/${userId}`)
 }
 
-function openComments(postId: number) {
+async function openComments(postId: number) {
     activePostId.value = postId
     showComments.value = true
+    const post = posts.value.find(p => p.id === postId)
+    if (post && (!post.comments || post.comments.length === 0)) {
+        try {
+            const { data } = await api.feed.getComments(postId)
+            post.comments = data.data
+            post.commentsCount = data.meta.total
+        } catch { }
+    }
 }
 
 function closeComments() {
@@ -125,32 +111,39 @@ function savePost(postId: number) {
 async function likePost(postId: string) {
     const post = posts.value.find(p => p.id === Number(postId))
     if (!post) return
-    post.isLiked = !post.isLiked
-    post.likesCount = post.isLiked ? post.likesCount + 1 : post.likesCount - 1
+
+    try {
+        await api.feed.toggleLike(Number(postId))
+        if (post.isLikedByMe) {
+            post.likesCount = Math.max(0, post.likesCount - 1)
+            post.isLikedByMe = false
+        } else {
+            post.likesCount += 1
+            post.isLikedByMe = true
+        }
+    } catch { }
 }
 
 async function sendComment() {
     if (!newComment.value.trim() || !activePostId.value) return
     sendingComment.value = true
-    
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
+
     const post = posts.value.find(p => p.id === activePostId.value)
     if (post) {
-        if (!post.comments) post.comments = []
-        post.comments.push({
-            id: Date.now(),
-            text: newComment.value.trim(),
-            createAt: new Date().toISOString(),
-            author: currentUser.value || undefined
-        })
+        try {
+            const { data } = await api.feed.createComment(post.id, { content: newComment.value.trim() })
+            if (!post.comments) post.comments = []
+            post.comments.push(data)
+            post.commentsCount = (post.commentsCount || 0) + 1
+            newComment.value = ''
+        } catch { }
     }
-    newComment.value = ''
     sendingComment.value = false
 }
 
 onMounted(() => {
-    // Mock data already initialized
+    loadUser()
+    loadFeed()
 })
 </script>
 
@@ -186,7 +179,7 @@ onMounted(() => {
                         ? 'tw-text-white tw-border-b-2 tw-border-white'
                         : 'tw-text-white/50'
                 ]">
-                    🔥 Рек
+                    🔥 В тренде
                 </button>
                 <button @click="feedMode = 'recent'" :class="[
                     'tw-text-base tw-font-bold tw-transition-all tw-pb-1',
@@ -194,7 +187,7 @@ onMounted(() => {
                         ? 'tw-text-white tw-border-b-2 tw-border-white'
                         : 'tw-text-white/50'
                 ]">
-                    🕐 Жаңа
+                    🕐 Новые
                 </button>
             </div>
 
@@ -203,27 +196,29 @@ onMounted(() => {
         </div>
 
         <!-- Empty state -->
-        <div v-if="!loading && (!sortedPosts || !sortedPosts.length)" class="tw-h-full tw-flex tw-items-center tw-justify-center">
+        <div v-if="!loading && (!sortedPosts || !sortedPosts.length)"
+            class="tw-h-full tw-flex tw-items-center tw-justify-center">
             <div class="tw-text-center">
                 <div class="tw-text-6xl tw-mb-4">📝</div>
-                <h3 class="tw-text-xl tw-font-bold tw-text-white tw-mb-2">Пост жоқ</h3>
-                <p class="tw-text-gray-400 tw-mb-6">Бірінші болып пост жасаңыз!</p>
+                <h3 class="tw-text-xl tw-font-bold tw-text-white tw-mb-2">Нет постов</h3>
+                <p class="tw-text-gray-400 tw-mb-6">Станьте первым, кто опубликует пост!</p>
                 <button @click="goBack"
                     class="tw-bg-[#0891B2] tw-text-white tw-px-6 tw-py-3 tw-rounded-xl tw-font-medium hover:tw-bg-[#0e7490] tw-transition-colors">
-                    ← Артқа
+                    ← Назад
                 </button>
             </div>
         </div>
 
         <!-- Posts Feed (TikTok style) -->
-        <div v-if="!loading && sortedPosts && sortedPosts.length" class="tw-h-full tw-overflow-y-scroll tw-snap-y tw-snap-mandatory"
+        <div v-if="!loading && sortedPosts && sortedPosts.length"
+            class="tw-h-full tw-overflow-y-scroll tw-snap-y tw-snap-mandatory"
             style="scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch;">
             <div v-for="(post, index) in sortedPosts" :key="post.id + '-' + feedMode" :id="`post-${index}`"
                 class="tw-h-full tw-snap-start tw-snap-always tw-relative tw-flex tw-items-end tw-justify-center"
                 style="scroll-snap-align: start; min-height: 100vh;">
                 <!-- Background Image or Gradient - FULL SCREEN -->
-                <div v-if="post.imgUrl" class="tw-absolute tw-inset-0">
-                    <img :src="post.imgUrl" alt="Post" class="tw-w-full tw-h-full tw-object-cover" />
+                <div v-if="post.imageUrl" class="tw-absolute tw-inset-0">
+                    <img :src="post.imageUrl" alt="Post" class="tw-w-full tw-h-full tw-object-cover" />
                     <div
                         class="tw-absolute tw-inset-0 tw-bg-gradient-to-t tw-from-black tw-via-transparent tw-to-black/50">
                     </div>
@@ -248,7 +243,7 @@ onMounted(() => {
                             </div>
                         </div>
                         <p class="tw-text-white tw-font-semibold group-hover:tw-underline">
-                            {{ post.author?.name }} {{ post.author?.surname }}
+                            {{ post.author?.name }} {{ post.author?.lastName }}
                         </p>
                         <p class="tw-text-white/70 tw-text-xs">{{ formatDate(post.createAt) }}</p>
                     </div>
@@ -256,15 +251,16 @@ onMounted(() => {
                     <!-- Review -->
                     <div class="tw-mb-3">
                         <p class="tw-text-white tw-text-base tw-leading-relaxed">
-                            {{ post.review }}
+                            {{ post.content }}
                         </p>
                     </div>
 
                     <!-- Link -->
-                    <div v-if="post.link">
-                        <a :href="post.link.startsWith('http') ? post.link : `https://${post.link}`" target="_blank"
+                    <div v-if="post.externalLink">
+                        <a :href="post.externalLink.startsWith('http') ? post.externalLink : `https://${post.externalLink}`"
+                            target="_blank"
                             class="tw-inline-flex tw-items-center tw-gap-1 tw-text-[#38BDF8] tw-text-sm hover:tw-underline">
-                            🔗 {{ post.link }}
+                            🔗 {{ post.externalLink }}
                         </a>
                     </div>
                 </div>
@@ -275,8 +271,8 @@ onMounted(() => {
                     <button @click="likePost(String(post.id))"
                         class="tw-flex tw-flex-col tw-items-center tw-gap-1 group">
                         <div class="tw-w-12 tw-h-12 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-text-2xl group-hover:tw-scale-110 tw-transition-all"
-                            :style="post.isLiked ? 'background: rgba(239,68,68,0.3); backdrop-filter: blur(10px);' : 'background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);'">
-                            {{ post.isLiked ? '❤️' : '🤍' }}
+                            :style="post.isLikedByMe ? 'background: rgba(239,68,68,0.3); backdrop-filter: blur(10px);' : 'background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);'">
+                            {{ post.isLikedByMe ? '❤️' : '🤍' }}
                         </div>
                         <span class="tw-text-white tw-text-xs tw-font-medium">{{ post.likesCount }}</span>
                     </button>
@@ -355,7 +351,7 @@ onMounted(() => {
                                             {{ formatTime(comment.createAt) }}
                                         </span>
                                     </div>
-                                    <p class="tw-text-gray-600">{{ comment.text }}</p>
+                                    <p class="tw-text-gray-600">{{ comment.content || comment.text }}</p>
                                 </div>
                             </div>
                         </div>

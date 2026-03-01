@@ -1,33 +1,18 @@
 <template>
-    <header class="marketplace-header">
+    <header class="cargo-header">
         <div class="header-container">
             <div class="header-main">
-                <a href="#" @click.prevent="goToHome" class="logo-link">
-                    <div class="logo-wrapper">
-                        <img src="/images/ai-market-logo.jpg" alt="Ai-Market" class="logo-img" />
-                    </div>
-                    <span class="brand-name">Ai-Market</span>
-                </a>
-
-                <div class="header-actions">
-                    <div v-if="isLoggedIn" class="search-compact" @click="goToSearch">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <circle cx="11" cy="11" r="8" />
-                            <path d="m21 21-4.35-4.35" />
+                <div class="brand-group">
+                    <div class="logo-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="truck-icon">
+                            <rect x="1" y="3" width="15" height="13"></rect>
+                            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                            <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                            <circle cx="18.5" cy="18.5" r="2.5"></circle>
                         </svg>
                     </div>
-
-                    <button v-if="!isLoggedIn" @click="goToLogin" class="auth-btn">
-                        Войти
-                    </button>
-                    
-                    <button v-if="isLoggedIn" @click="goToSearch" class="search-full">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <circle cx="11" cy="11" r="8" />
-                            <path d="m21 21-4.35-4.35" />
-                        </svg>
-                        <span>Поиск товаров...</span>
-                    </button>
+                    <span class="brand-name">CargoFlow</span>
                 </div>
             </div>
         </div>
@@ -43,186 +28,68 @@ interface JwtPayload {
 
 const router = useRouter()
 const token = useCookie('token')
+const userAvatar = ref<string | null>(null)
 
 const isLoggedIn = computed(() => !!token.value)
-
-function goToHome() {
-    if (!token.value) {
-        router.push('/')
-        return
-    }
-
-    try {
-        const payload = jwtDecode<JwtPayload>(token.value)
-        if (payload.role === 'admin') {
-            router.push('/admin')
-        } else if (payload.role === 'superAdmin') {
-            router.push('/superAdmin')
-        } else {
-            router.push('/user')
-        }
-    } catch {
-        router.push('/')
-    }
-}
-
-function goToLogin() {
-    router.push('/auth/login')
-}
-
-function goToSearch() {
-    router.push('/user/search')
-}
 </script>
 
 <style scoped>
-.marketplace-header {
+.cargo-header {
     position: sticky;
     top: 0;
     z-index: 1000;
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    background-color: #0d1117;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 0 16px;
 }
 
 .header-container {
-    max-width: 1200px;
+    max-width: 680px;
     margin: 0 auto;
-    padding: 0 16px;
 }
 
 .header-main {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    height: 72px;
-    gap: 20px;
+    justify-content: center;
+    height: 64px;
 }
 
-.logo-link {
+.brand-group {
     display: flex;
     align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    flex-shrink: 0;
+    justify-content: center;
+    gap: 12px;
 }
 
-.logo-wrapper {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    overflow: hidden;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    border: 2px solid rgba(255, 255, 255, 0.5);
+.logo-box {
+    width: 32px;
+    height: 32px;
+    background-color: #2563eb;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
 }
 
-.logo-link:hover .logo-wrapper {
-    transform: scale(1.08) rotate(-3deg);
-}
-
-.logo-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.truck-icon {
+    width: 20px;
+    height: 20px;
 }
 
 .brand-name {
-    font-size: 22px;
-    font-weight: 800;
-    letter-spacing: -0.8px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex: 1;
-    justify-content: flex-end;
-}
-
-.search-full {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(0, 0, 0, 0.03);
-    border: 1.5px solid rgba(102, 126, 234, 0.15);
-    color: #999;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    padding: 10px 18px;
-    border-radius: 12px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 100%;
-    max-width: 400px;
-}
-
-.search-full:hover {
-    background: rgba(102, 126, 234, 0.08);
-    border-color: #667eea;
-}
-
-.search-compact {
-    display: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: rgba(102, 126, 234, 0.1);
-    align-items: center;
-    justify-content: center;
-    color: #667eea;
-    cursor: pointer;
-    border: 1px solid rgba(102, 126, 234, 0.2);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.auth-btn {
-    padding: 10px 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    border-radius: 12px;
-    color: #fff;
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 6px 18px rgba(102, 126, 234, 0.3);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    white-space: nowrap;
-    letter-spacing: 0.3px;
+    color: white;
+    letter-spacing: -0.5px;
 }
 
-.auth-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-}
 
-.auth-btn:active {
-    transform: translateY(-1px);
-}
-
-@media (max-width: 768px) {
-    .search-full {
-        display: none;
-    }
-    .search-compact {
-        display: flex;
-    }
-    .brand-name {
-        font-size: 18px;
-    }
-}
 
 @media (max-width: 480px) {
     .brand-name {
-        display: none;
+        font-size: 16px;
     }
 }
 </style>

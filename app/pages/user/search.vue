@@ -1,202 +1,475 @@
 <script setup lang="ts">
+import type { TrackingItem } from '~/types'
+import { useToast } from '~/composables/useToast'
+
 definePageMeta({
     layout: 'user'
 })
 
-// ... interfaces ...
-
-const allMockPosts = [
-    {
-        id: 1,
-        link: 'https://wildberries.ru/catalog/123/detail.aspx',
-        review: 'Отличные кроссовки! Качество на высоте, оригинал.',
-        likesCount: 124,
-        isLiked: true,
-        createAt: new Date().toISOString(),
-        author: { id: 101, name: 'Александр', surname: 'Ким', code: 'Ai-888' }
-    },
-    {
-        id: 2,
-        link: 'https://kaspi.kz/',
-        review: 'Наконец-то приехал мой iPhone! В Алматы доставили за 10 дней.',
-        likesCount: 89,
-        isLiked: false,
-        createAt: new Date().toISOString(),
-        author: { id: 103, name: 'Елена', surname: 'Ибрагимова', code: 'Ai-777' }
-    },
-    {
-        id: 3,
-        link: 'https://ozon.ru/',
-        review: 'Робот-пылесос Xiaomi. Очень доволен покупкой.',
-        likesCount: 45,
-        isLiked: false,
-        createAt: new Date().toISOString(),
-        author: { id: 104, name: 'Даурен', surname: 'Мурат', code: 'Ai-555' }
-    }
-]
-
+const api = useApi()
+const toast = useToast()
 const searchQuery = ref('')
-const posts = ref<Post[]>([])
+const result = ref<TrackingItem | null>(null)
 const loading = ref(false)
 const searched = ref(false)
 
-async function searchPosts() {
+async function searchTrack() {
     if (!searchQuery.value.trim()) {
-        posts.value = []
+        result.value = null
         searched.value = false
         return
     }
-    
+
     loading.value = true
     searched.value = true
-    
-    // Simulate API delay
-    await new Promise(r => setTimeout(r, 400))
-    
-    const query = searchQuery.value.toLowerCase()
-    posts.value = allMockPosts.filter(p => 
-        p.review.toLowerCase().includes(query) || 
-        p.author.name.toLowerCase().includes(query)
-    )
-    
-    loading.value = false
+
+    try {
+        const { data } = await api.tracking.searchByCode(searchQuery.value.trim())
+        result.value = data
+    } catch (e: any) {
+        result.value = null
+        if (e.response?.status !== 404) {
+            toast.error('Ошибка поиска')
+        }
+    } finally {
+        loading.value = false
+    }
 }
 
-async function likePost(postId: number) {
-    const post = posts.value.find(p => p.id === postId)
-    if (!post) return
-    post.isLiked = !post.isLiked
-    post.likesCount = post.isLiked ? post.likesCount + 1 : post.likesCount - 1
-}
-
-function formatDate(date: string) {
-    const now = new Date()
-    const postDate = new Date(date)
-    const diff = Math.floor((now.getTime() - postDate.getTime()) / 1000)
-    
-    if (diff < 60) return 'только что'
-    if (diff < 3600) return Math.floor(diff / 60) + ' мин.'
-    if (diff < 86400) return Math.floor(diff / 3600) + ' ч.'
-    if (diff < 604800) return Math.floor(diff / 86400) + ' дн.'
-    return postDate.toLocaleDateString('ru-RU')
-}
-
-function goToProfile(authorId: number | undefined) {
-    if (authorId) router.push('/user/profile/' + authorId)
+function getProgress(item: TrackingItem) {
+    return [item.createAt, item.chinaArrivalDate, item.aicargoArrivalDate].filter(Boolean).length
 }
 
 function clearSearch() {
     searchQuery.value = ''
-    posts.value = []
+    result.value = null
     searched.value = false
 }
 </script>
 
 <template>
     <div class="search-page">
-        <!-- Search Header -->
-        <div class="search-header">
-            <div class="search-input-wrapper">
-                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                <input 
-                    v-model="searchQuery" 
-                    @keyup.enter="searchPosts" 
-                    type="text" 
-                    placeholder="Поиск постов..." 
-                    class="search-input"
-                    autofocus
-                />
-                <button v-if="searchQuery" @click="clearSearch" class="search-clear">✕</button>
+        <div class="search-container">
+            <!-- Search Header -->
+            <div class="search-title-row">
+                <h1>Поиск</h1>
             </div>
-            <button @click="searchPosts" class="search-btn" :disabled="!searchQuery.trim()">Найти</button>
-        </div>
-
-        <!-- Loading -->
-        <div v-if="loading" class="loading">
-            <div class="spinner"></div>
-        </div>
-
-        <!-- Results -->
-        <div v-else-if="searched" class="search-results">
-            <div v-if="!posts.length" class="empty">
-                <div class="empty-icon">🔍</div>
-                <h3>Ничего не найдено</h3>
-                <p>Попробуйте изменить запрос</p>
+            <div class="search-header">
+                <div class="search-input-box">
+                    <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <input v-model="searchQuery" @keyup.enter="searchTrack" type="text"
+                        placeholder="Поиск груза или трек-кода..." class="search-input" autofocus />
+                    <button v-if="searchQuery" @click="clearSearch" class="search-clear">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <button @click="searchTrack" class="search-submit-btn" :disabled="!searchQuery.trim() || loading">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                </button>
             </div>
 
-            <div v-else>
-                <p class="results-count">Найдено: {{ posts.length }}</p>
-                
-                <div class="posts-list">
-                    <div v-for="post in posts" :key="post.id" class="post-item">
-                        <div class="post-avatar" @click="goToProfile(post.author?.id)">
-                            {{ post.author?.name?.charAt(0).toUpperCase() || 'U' }}
-                        </div>
-                        <div class="post-content">
-                            <div class="post-header" @click="goToProfile(post.author?.id)">
-                                <span class="post-author">{{ post.author?.name || 'User' }}</span>
-                                <span class="post-time">{{ formatDate(post.createAt) }}</span>
+            <!-- Content Area -->
+            <div class="content-area">
+                <div v-if="loading" class="loading-state">
+                    <div class="loader"></div>
+                </div>
+
+                <div v-else-if="searched" class="search-results">
+                    <div v-if="!result" class="empty-results">
+                        <div class="empty-icon">🔎</div>
+                        <h3>Код не найден</h3>
+                        <p>Мы не смогли найти груз с таким трек-кодом. Пожалуйста, проверьте и попробуйте снова.</p>
+                    </div>
+
+                    <div v-else class="result-box">
+                        <h2 class="section-title">Результат поиска</h2>
+
+                        <div class="tracking-card">
+                            <div class="card-header">
+                                <div class="code-badge">
+                                    <span class="label">ТРЕК-КОД</span>
+                                    <span class="code">{{ result.trackingCode }}</span>
+                                </div>
+                                <div class="status-indicator" :class="{ completed: getProgress(result) === 3 }">
+                                    {{ getProgress(result) === 3 ? 'Доставлен' : 'В пути' }}
+                                </div>
                             </div>
-                            <p class="post-text">{{ post.review }}</p>
-                            <a v-if="post.link" :href="post.link.startsWith('http') ? post.link : 'https://' + post.link" target="_blank" class="post-link">
-                                🔗 {{ post.link }}
-                            </a>
-                            <div class="post-actions">
-                                <button class="action-btn" :class="{ liked: post.isLiked }" @click="likePost(post.id)">
-                                    {{ post.isLiked ? '❤️' : '♡' }} {{ post.likesCount }}
+
+                            <div class="card-content">
+                                <h3 class="cargo-desc">{{ result.description || 'Доставка груза' }}</h3>
+
+                                <div class="tracking-progress">
+                                    <div class="progress-track">
+                                        <div class="progress-fill"
+                                            :style="{ width: (getProgress(result) / 3 * 100) + '%' }"></div>
+                                    </div>
+                                    <div class="progress-steps">
+                                        <div class="step" :class="{ active: !!result.createAt }">
+                                            <div class="dot"></div>
+                                            <span>Зарегистрирован</span>
+                                        </div>
+                                        <div class="step" :class="{ active: !!result.chinaArrivalDate }">
+                                            <div class="dot"></div>
+                                            <span>В Китае</span>
+                                        </div>
+                                        <div class="step" :class="{ active: !!result.aicargoArrivalDate }">
+                                            <div class="dot"></div>
+                                            <span>Главный хаб</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-footer">
+                                <button class="details-btn">
+                                    Посмотреть историю
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M5 12h14M12 5l7 7-7 7" />
+                                    </svg>
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Initial State -->
-        <div v-else class="initial-state">
-            <div class="initial-icon">🔍</div>
-            <h3>Поиск постов</h3>
-            <p>Введите текст для поиска</p>
+                <!-- Initial State -->
+                <div v-else class="initial-state">
+                    <div class="illustration">
+                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#30363d" stroke-width="1">
+                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <p class="initial-hint">Введите трек-код для начала</p>
+                </div>
+            </div>
         </div>
     </div>
 </template>
 
 <style scoped>
-.search-page { padding: 16px 0; }
+.search-page {
+    background-color: #0d1117;
+    min-height: calc(100vh - 64px);
+    color: #e6edf3;
+    padding-bottom: 80px;
+    font-family: 'Inter', -apple-system, sans-serif;
+}
 
-.search-header { display: flex; gap: 12px; margin-bottom: 20px; }
-.search-input-wrapper { flex: 1; display: flex; align-items: center; gap: 12px; padding: 0 16px; background: #111; border: 1px solid #333; border-radius: 12px; }
-.search-icon { color: #555; flex-shrink: 0; }
-.search-input { flex: 1; height: 48px; background: transparent; border: none; outline: none; color: #fff; font-size: 16px; }
-.search-input::placeholder { color: #555; }
-.search-clear { background: transparent; border: none; color: #555; cursor: pointer; padding: 8px; font-size: 16px; }
-.search-btn { padding: 0 20px; background: #fff; border: none; border-radius: 12px; color: #000; font-size: 15px; font-weight: 600; cursor: pointer; }
-.search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.search-btn:hover:not(:disabled) { background: #e5e5e5; }
+.search-container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 24px 16px;
+}
 
-.loading { display: flex; justify-content: center; padding: 60px 0; }
-.spinner { width: 24px; height: 24px; border: 2px solid #333; border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.search-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
 
-.empty, .initial-state { text-align: center; padding: 80px 20px; }
-.empty-icon, .initial-icon { font-size: 64px; margin-bottom: 20px; }
-.empty h3, .initial-state h3 { font-size: 20px; font-weight: 600; color: #fff; margin: 0 0 8px; }
-.empty p, .initial-state p { font-size: 15px; color: #666; margin: 0; }
+.search-title-row h1 {
+    font-size: 24px;
+    font-weight: 800;
+    color: white;
+    margin: 0;
+}
 
-.results-count { font-size: 14px; color: #666; margin-bottom: 16px; }
+/* Header */
+.search-header {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+}
 
-.posts-list { display: flex; flex-direction: column; }
-.post-item { display: flex; gap: 12px; padding: 16px 0; border-bottom: 1px solid #222; }
-.post-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; color: #fff; flex-shrink: 0; cursor: pointer; }
-.post-content { flex: 1; }
-.post-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; cursor: pointer; }
-.post-author { font-size: 15px; font-weight: 600; color: #fff; }
-.post-time { font-size: 14px; color: #555; }
-.post-text { font-size: 15px; color: #fff; line-height: 1.5; margin: 0 0 8px; white-space: pre-wrap; }
-.post-link { display: inline-block; font-size: 14px; color: #1d9bf0; text-decoration: none; margin-bottom: 12px; }
-.post-link:hover { text-decoration: underline; }
-.post-actions { display: flex; gap: 16px; margin-top: 8px; }
-.action-btn { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: transparent; border: none; color: #666; cursor: pointer; border-radius: 20px; font-size: 14px; }
-.action-btn:hover { background: #111; color: #fff; }
-.action-btn.liked { color: #f91880; }
+.search-input-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 16px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input-box:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.search-icon {
+    color: #8b949e;
+    flex-shrink: 0;
+}
+
+.search-input {
+    flex: 1;
+    height: 52px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: white;
+    font-size: 16px;
+}
+
+.search-clear {
+    background: none;
+    border: none;
+    color: #8b949e;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.search-submit-btn {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.search-submit-btn:disabled {
+    background-color: #30363d;
+    color: #8b949e;
+    cursor: not-allowed;
+}
+
+/* Results */
+.section-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #8b949e;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+}
+
+.tracking-card {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid #30363d;
+}
+
+.code-badge {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.code-badge .label {
+    font-size: 9px;
+    font-weight: 800;
+    color: #8b949e;
+    letter-spacing: 1px;
+}
+
+.code-badge .code {
+    font-size: 18px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: 0.5px;
+}
+
+.status-indicator {
+    padding: 6px 12px;
+    background-color: #2563eb;
+    color: white;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.status-indicator.completed {
+    background-color: #10b981;
+}
+
+.card-content {
+    padding: 24px 20px;
+}
+
+.cargo-desc {
+    font-size: 20px;
+    font-weight: 800;
+    color: white;
+    margin: 0 0 24px;
+}
+
+.tracking-progress {
+    margin-top: 12px;
+}
+
+.progress-track {
+    height: 8px;
+    background-color: #0d1117;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #2563eb;
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.step .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #30363d;
+    border: 2px solid #161b22;
+    z-index: 2;
+}
+
+.step.active .dot {
+    background-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+}
+
+.step span {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8b949e;
+}
+
+.step.active span {
+    color: white;
+}
+
+.card-footer {
+    padding: 16px 20px;
+    background-color: rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: center;
+}
+
+.details-btn {
+    background: none;
+    border: none;
+    color: #2563eb;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+/* States */
+.loading-state {
+    padding: 80px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.loader {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(37, 99, 235, 0.1);
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.initial-state {
+    text-align: center;
+    padding: 100px 24px;
+}
+
+.empty-results {
+    text-align: center;
+    padding: 80px 24px;
+}
+
+.illustration {
+    margin-bottom: 24px;
+    opacity: 0.15;
+    display: flex;
+    justify-content: center;
+}
+
+.illustration svg {
+    width: 64px;
+    height: 64px;
+}
+
+.initial-hint {
+    font-size: 15px;
+    color: #555;
+    margin-top: 16px;
+}
+
+.initial-state h3,
+.empty-results h3 {
+    font-size: 20px;
+    font-weight: 800;
+    color: white;
+    margin: 0 0 12px;
+}
+
+.initial-state p,
+.empty-results p {
+    font-size: 15px;
+    color: #8b949e;
+    line-height: 1.6;
+    max-width: 360px;
+    margin: 0 auto;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 24px;
+}
 </style>

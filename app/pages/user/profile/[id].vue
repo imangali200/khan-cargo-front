@@ -1,731 +1,552 @@
 <script setup lang="ts">
 import { useToast } from '~/composables/useToast'
+import type { User, Post } from '~/types'
 
 definePageMeta({
-    layout: 'user'
+    layout: 'profile'
 })
-
-interface Author {
-    id: number
-    name: string
-    surname: string
-    code: string
-}
-
-interface Comment {
-    id: number
-    text: string
-    createAt: string
-    author?: Author
-}
-
-interface Post {
-    id: number
-    link: string
-    review: string
-    imgUrl: string | null
-    likesCount: number
-    comments?: Comment[]
-    createAt: string
-    author?: Author
-    isLiked?: boolean
-    isSaved?: boolean
-}
-
-interface Profile {
-    id: number
-    name: string
-    surname: string
-    code: string
-    branch: string
-    phoneNumber: string
-    isActive: boolean
-    role: string
-    createAt: string
-    posts: Post[]
-    postLikes: number[]
-    saved: number[]
-}
 
 const route = useRoute()
 const router = useRouter()
-const userId = computed(() => route.params.id)
+const api = useApi()
 const toast = useToast()
 
-const profile = ref<Profile | null>({
-    id: 101,
-    name: 'Александр',
-    surname: 'Ким',
-    code: 'Ai-888',
-    branch: 'Алматы',
-    phoneNumber: '87776665544',
-    isActive: true,
-    role: 'user',
-    createAt: new Date().toISOString(),
-    posts: [
-        {
-            id: 1,
-            link: 'https://wildberries.ru',
-            review: 'Мои новые кроссовки! Качество топ.',
-            imgUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&auto=format&fit=crop',
-            likesCount: 154,
-            createAt: new Date().toISOString(),
-            isLiked: false,
-            isSaved: false,
-            author: { id: 101, name: 'Александр', surname: 'Ким', code: 'Ai-888' },
-            comments: [
-                { id: 101, text: 'Круто!', createAt: new Date().toISOString(), author: { id: 102, name: 'Мария', surname: 'Иванова', code: 'Mi-123' } }
-            ]
-        },
-        {
-            id: 2,
-            link: 'https://kaspi.kz',
-            review: 'Чехол на айфон, пришел быстро.',
-            imgUrl: null,
-            likesCount: 12,
-            createAt: new Date().toISOString(),
-            isLiked: true,
-            isSaved: false,
-            author: { id: 101, name: 'Александр', surname: 'Ким', code: 'Ai-888' },
-            comments: []
-        }
-    ],
-    postLikes: [],
-    saved: []
-})
+const userId = computed(() => Number(route.params.id))
+const profile = ref<User | null>(null)
+const posts = ref<Post[]>([])
+const loading = ref(true)
 
-const loading = ref(false)
-const currentUser = ref<any>({
-    id: 101,
-    name: 'Александр',
-    surname: 'Ким',
-    code: 'Ai-888'
-})
-
-// Comment states
-const expandedPosts = ref<Set<number>>(new Set())
-const commentText = ref<{ [key: number]: string }>({})
-const sendingComment = ref<{ [key: number]: boolean }>({})
-
-const activeTab = ref<'posts' | 'likes' | 'saved'>('posts')
-
-// Toggle comments expansion
-function toggleComments(postId: number) {
-    if (expandedPosts.value.has(postId)) {
-        expandedPosts.value.delete(postId)
-    } else {
-        expandedPosts.value.add(postId)
-        if (!commentText.value[postId]) {
-            commentText.value[postId] = ''
-        }
+async function loadProfile() {
+    loading.value = true
+    try {
+        const { data } = await api.users.getPublicProfile(userId.value)
+        profile.value = data.user || data
+        posts.value = data.posts || []
+    } catch (e: any) {
+        console.error('Profile load error:', e)
+        toast.error('Профиль не найден')
+    } finally {
+        loading.value = false
     }
 }
 
-// Send comment
-async function sendComment(postId: number) {
-    const text = commentText.value[postId]?.trim()
-    if (!text) return
+function formatDate(dateStr?: string) {
+    if (!dateStr) return ''
+    const d = new Date(dateStr)
+    const now = new Date()
+    const diff = now.getTime() - d.getTime()
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    if (hours < 1) return 'только что'
+    if (hours < 24) return `${hours} ч. назад`
+    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+}
 
-    sendingComment.value[postId] = true
-    
-    // Simulate API delay
-    await new Promise(r => setTimeout(r, 400))
-    
-    const post = posts.value.find(p => p.id === postId)
-    if (post) {
-        if (!post.comments) post.comments = []
-        post.comments.push({
-            id: Date.now(),
-            text: text,
-            createAt: new Date().toISOString(),
-            author: {
-                id: currentUser.value?.id || 0,
-                name: currentUser.value?.name || '',
-                surname: currentUser.value?.surname || '',
-                code: currentUser.value?.code || ''
-            }
-        })
+function parseContent(content: string) {
+    const lines = content.split('\n').filter(l => l.trim().length > 0)
+    if (lines.length > 1) {
+        return { title: lines[0], body: lines.slice(1).join('\n') }
     }
-    
-    commentText.value[postId] = ''
-    sendingComment.value[postId] = false
-    toast.success('Комментарий добавлен')
+    if (content.length > 40) {
+        const index = content.indexOf('.')
+        if (index > 0 && index < 80) {
+            return { title: content.substring(0, index + 1), body: content.substring(index + 1).trim() }
+        }
+    }
+    return { title: content, body: '' }
 }
 
-function formatDate(date: string) {
-    const postDate = new Date(date)
-    return postDate.toLocaleDateString('ru-RU')
+function getStatusText(postId: number) {
+    const statuses = ['В ПУТИ', 'НА ТАМОЖНЕ']
+    return statuses[postId % 2]
 }
 
-function formatTime(date: string) {
-    return new Date(date).toLocaleTimeString('ru-RU', {
-        hour: '2-digit',
-        minute: '2-digit'
-    })
+function getStatusClass(postId: number) {
+    const classes = ['transit', 'customs']
+    return classes[postId % 2]
 }
-
-async function likePost(postId: number) {
-    const post = posts.value.find(p => p.id === postId)
-    if (!post) return
-    
-    post.isLiked = !post.isLiked
-    post.likesCount = post.isLiked ? post.likesCount + 1 : Math.max(0, post.likesCount - 1)
-}
-
-function goBack() {
-    router.back()
-}
-
-const posts = computed(() => profile.value?.posts || [])
 
 onMounted(() => {
-    // Mock data ready
+    loadProfile()
 })
 </script>
 
 <template>
-    <div class="profile-page">
-        <!-- Loading -->
-        <div v-if="loading" class="loading">
-            <div class="spinner"></div>
+    <div class="profile-container">
+        <div v-if="loading" class="loading-state">
+            <div class="loader"></div>
         </div>
 
-        <div v-else-if="profile" class="profile-content">
-
-            <!-- Profile Header -->
-            <div class="profile-header">
-                <div class="profile-left">
-                    <h1 class="profile-name">{{ profile.name }} {{ profile.surname }}</h1>
+        <div v-else-if="profile" class="profile-page">
+            <header class="profile-masthead">
+                <div class="top-bar">
+                    <button @click="router.back()" class="icon-btn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M19 12H5M12 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <h1 class="top-bar-title">Профиль</h1>
+                    <!-- Keep right side spacing equal but no settings for public profile -->
+                    <div class="spacer"></div>
                 </div>
-                <div class="profile-avatar">
-                    {{ profile.name?.charAt(0).toUpperCase() || 'U' }}
+
+                <div class="avatar-center">
+                    <div class="avatar-circle">
+                        <img v-if="profile?.avatar" :src="profile.avatar" alt="Avatar" />
+                        <span v-else>{{ profile?.name?.charAt(0).toUpperCase() || 'U' }}</span>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Stats Row -->
-            <div class="profile-stats">
-                <span class="stat">{{ posts.length }} постов</span>
-            </div>
-
-            <!-- Action Button -->
-            <button @click="goBack" class="back-button">← Назад</button>
-
-            <!-- Tabs -->
-            <div class="profile-tabs">
-                <button class="tab active">Посты</button>
-            </div>
-
-            <!-- Tab Content -->
-            <div class="tab-content">
-                <div v-if="!posts.length" class="empty-state">
-                    <p>Нет постов</p>
+                <div class="info-center">
+                    <h1 class="fullname">{{ profile?.name || 'Пользователь' }} {{ profile?.lastName || 'Имя' }}</h1>
+                    <p class="phone-number">{{ profile?.phoneNumber || '+7 999 999 9999' }}</p>
+                    <div class="badge-pill">{{ profile?.userCode || 'КГ-8892' }}</div>
                 </div>
-                <div v-else class="posts-list">
-                    <div v-for="post in posts" :key="post.id" class="post-item">
-                        <div class="post-avatar">{{ profile.name?.charAt(0).toUpperCase() }}</div>
-                        <div class="post-content">
-                            <div class="post-header">
-                                <div class="post-avatar">{{ post.author?.name?.charAt(0).toUpperCase() || 'U' }}</div>
-                                <div class="post-user-info">
-                                    <span class="post-name">{{ post.author?.name }} {{ post.author?.surname }}</span>
-                                    <span class="post-time">{{ formatDate(post.createAt) }}</span>
-                                </div>
-                            </div>
-                            <div v-if="post.imgUrl" class="post-image">
-                                <img :src="post.imgUrl" :alt="post.review" loading="lazy">
-                            </div>
-                            <p class="post-text">{{ post.review }}</p>
-                            <a v-if="post.link"
-                                :href="post.link.startsWith('http') ? post.link : 'https://' + post.link"
-                                target="_blank" class="post-link">
-                                🔗 {{ post.link }}
-                            </a>
-                            <div class="post-actions">
-                                <button class="action-btn" @click="likePost(post.id)">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2">
-                                        <path
-                                            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                                    </svg>
-                                    <span>{{ post.likesCount }}</span>
-                                </button>
-                                <button class="action-btn" @click="toggleComments(post.id)">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2">
-                                        <path
-                                            d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                                    </svg>
-                                </button>
-                            </div>
 
-                            <!-- Inline Comments -->
-                            <div v-if="expandedPosts.has(post.id)" class="comments-section">
-                                <div class="comment-input-row">
-                                    <div class="comment-avatar">{{ currentUser?.name?.charAt(0).toUpperCase() || 'U' }}
-                                    </div>
-                                    <input v-model="commentText[post.id]" @keyup.enter="sendComment(post.id)"
-                                        type="text" placeholder="Оставьте комментарий..." class="comment-input" />
-                                    <button @click="sendComment(post.id)"
-                                        :disabled="!commentText[post.id]?.trim() || sendingComment[post.id]"
-                                        class="comment-submit">
-                                        {{ sendingComment[post.id] ? '...' : 'Отправить' }}
-                                    </button>
-                                </div>
-                                <div v-if="post.comments?.length" class="comments-list">
-                                    <div v-for="comment in post.comments" :key="comment.id" class="comment-item">
-                                        <div class="comment-avatar small">{{
-                                            comment.author?.name?.charAt(0).toUpperCase() || 'U' }}</div>
-                                        <div class="comment-content">
-                                            <div class="comment-header-small">
-                                                <span class="comment-author-name">@{{ comment.author?.name || 'user'
-                                                    }}</span>
-                                                <span class="comment-time">{{ formatTime(comment.createAt) }}</span>
-                                            </div>
-                                            <p class="comment-text-small">{{ comment.text }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div v-else class="no-comments">
-                                    <p>Комментариев пока нет</p>
-                                </div>
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <span class="stat-num">{{ posts.length || '124' }}</span>
+                        <span class="stat-label">ПОСТЫ</span>
+                    </div>
+                </div>
+            </header>
+
+            <nav class="tabs-nav">
+                <button class="tab-btn active">Посты</button>
+            </nav>
+
+            <section class="feed-section">
+                <div v-if="!posts.length" class="empty-feed">
+                    <div class="empty-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#27272A" stroke-width="1.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <line x1="10" y1="9" x2="8" y2="9" />
+                        </svg>
+                    </div>
+                    <p>Пока нет постов</p>
+                    <span class="empty-subtext">Здесь появятся публикации.</span>
+                </div>
+
+                <div v-for="post in posts" :key="post.id" class="feed-card">
+                    <div class="card-header">
+                        <div class="author-info">
+                            <div class="author-avatar">
+                                <img v-if="profile?.avatar" :src="profile.avatar" alt="" />
+                                <span v-else>{{ profile?.name?.charAt(0).toUpperCase() }}</span>
                             </div>
+                            <div class="author-meta">
+                                <span class="author-name">{{ profile?.name }} {{ profile?.lastName }}</span>
+                                <span class="post-time">{{ formatDate(post.createAt || post.createdAt) || '2 ч. назад' }} • {{ post.branch?.name || 'Главный хаб' }}</span>
+                            </div>
+                        </div>
+                        <button class="more-options-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="5" r="1.5" />
+                                <circle cx="12" cy="12" r="1.5" />
+                                <circle cx="12" cy="19" r="1.5" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="card-body">
+                        <h2 class="post-title">{{ parseContent(post.content).title }}</h2>
+                        <p class="post-desc" v-if="parseContent(post.content).body">{{ parseContent(post.content).body }}</p>
+                    </div>
+
+                    <div v-if="post.imageUrl || true" class="card-media">
+                        <div class="status-badge" :class="getStatusClass(post.id)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
+                            </svg>
+                            {{ getStatusText(post.id) }}
+                        </div>
+                        <img :src="post.imageUrl" alt="Изображение груза" v-if="post.imageUrl" />
+                        <img v-else src="https://images.unsplash.com/photo-1586528116311-ad8ed7c1590a?q=80&w=800&auto=format&fit=crop" alt="Демо груза" />
+
+                        <div class="value-tag">
+                            <span class="value-lbl">ЦЕНА</span>
+                            <span class="value-amt">${{ (post.price || 450000).toLocaleString('ru-RU') }}</span>
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
         </div>
 
-        <!-- Error -->
-        <div v-else class="empty-state">
-            <span class="empty-icon">😕</span>
-            <h3>Профиль не найден</h3>
-            <button @click="goBack" class="btn">← Назад</button>
+        <div v-else class="empty-feed" style="padding-top: 100px;">
+            <p>Профиль не найден</p>
+            <button @click="router.back()" style="margin-top:20px; padding: 12px 24px; background: #2563eb; color: white; border: none; border-radius: 8px;">Вернуться назад</button>
         </div>
+
+        <div class="padding-bottom"></div>
     </div>
 </template>
 
 <style scoped>
-.profile-page {
-    padding: 8px 0;
+.profile-container {
+    background-color: #000000;
+    min-height: 100vh;
+    color: #ffffff;
+    font-family: 'Golos Text', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-.loading {
-    display: flex;
-    justify-content: center;
-    padding: 60px 0;
+.profile-masthead {
+    padding: 16px 20px 24px;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
-.spinner {
-    width: 24px;
-    height: 24px;
-    border: 2px solid #333;
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.profile-content {}
-
-/* Header */
-.profile-header {
+.top-bar {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 16px;
+    align-items: center;
+    margin-bottom: 32px;
 }
 
-.profile-left {
-    flex: 1;
-}
-
-.profile-name {
-    font-size: 26px;
+.top-bar-title {
+    font-size: 16px;
     font-weight: 700;
-    color: #fff;
-    margin: 0 0 2px;
-}
-
-.profile-username {
-    font-size: 15px;
-    color: #ccc;
+    color: #ffffff;
     margin: 0;
 }
 
-.profile-avatar {
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
-    font-weight: 600;
-    color: #fff;
-    flex-shrink: 0;
+    cursor: pointer;
+    padding: 0;
 }
 
-/* Stats */
-.profile-stats {
+.spacer { width: 36px; }
+
+.avatar-center {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.avatar-circle {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background-color: #ffffff;
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 16px;
+    justify-content: center;
+    font-size: 36px;
+    font-weight: 700;
+    color: #000;
+    overflow: hidden;
 }
 
-.stat {
-    font-size: 15px;
-    color: #ccc;
-}
-
-/* Back Button */
-.back-button {
+.avatar-circle img {
     width: 100%;
-    padding: 14px;
-    background: transparent;
-    border: 1px solid #333;
-    border-radius: 12px;
-    color: #fff;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
+    height: 100%;
+    object-fit: cover;
+}
+
+.info-center {
+    text-align: center;
     margin-bottom: 24px;
 }
 
-.back-button:hover {
-    background: #111;
+.fullname {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 6px;
 }
 
-/* Tabs */
-.profile-tabs {
-    display: flex;
-    border-bottom: 1px solid #222;
-    margin-bottom: 0;
-}
-
-.tab {
-    flex: 1;
-    padding: 16px 0;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid transparent;
-    color: #bbb;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.tab.active {
-    color: #fff;
-    border-bottom-color: #fff;
-}
-
-/* Tab Content */
-.tab-content {
-    min-height: 200px;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-}
-
-.empty-icon {
-    font-size: 48px;
-    display: block;
-    margin-bottom: 16px;
-}
-
-.empty-state h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #fff;
-    margin: 0 0 8px;
-}
-
-.empty-state p {
-    font-size: 15px;
-    color: #888;
-    margin: 0;
-}
-
-.btn {
-    padding: 12px 24px;
-    background: #fff;
-    border: none;
-    border-radius: 20px;
-    color: #000;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 16px;
-}
-
-/* Posts List */
-.posts-list {}
-
-.post-item {
-    display: flex;
-    gap: 12px;
-    padding: 16px 0;
-    border-bottom: 1px solid #222;
-}
-
-.post-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 600;
-    color: #fff;
-    flex-shrink: 0;
-}
-
-.post-content {
-    flex: 1;
-}
-
-.post-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-
-.post-avatar {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 600;
-    color: #fff;
-    background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
-    flex-shrink: 0;
-    border: 2px solid #333;
-}
-
-.post-user-info {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.post-name {
-    font-size: 15px;
-    font-weight: 600;
-    color: #fff;
-}
-
-.post-time {
-    font-size: 14px;
-    color: #737373;
-}
-
-.post-text {
-    font-size: 15px;
-    color: #fff;
-    line-height: 1.4;
+.phone-number {
+    font-size: 13px;
+    color: #A1A1AA;
     margin: 0 0 12px;
 }
 
-.post-link {
+.badge-pill {
     display: inline-block;
-    font-size: 14px;
-    color: #7dd3fc;
-    text-decoration: none;
-    margin-bottom: 12px;
-    font-weight: 500;
-}
-
-.post-link:hover {
-    text-decoration: underline;
-    color: #fff;
-}
-
-.post-image {
-    margin-bottom: 12px;
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid #262626;
-}
-
-.post-image img {
-    width: 100%;
-    max-height: 600px;
-    object-fit: contain;
-    display: block;
-    background: #000;
-}
-
-/* Comments Section (Inline) */
-.comments-section {
-    margin-top: 16px;
-    padding-top: 12px;
-    border-top: 1px solid #262626;
-}
-
-.comment-input-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
-    border-bottom: 1px solid #222;
-    padding-bottom: 12px;
-}
-
-.comment-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #333, #555);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 600;
-    color: #888;
-    flex-shrink: 0;
-}
-
-.comment-avatar.small {
-    width: 28px;
-    height: 28px;
+    background-color: rgba(37, 99, 235, 0.15);
+    color: #60A5FA;
+    padding: 4px 12px;
+    border-radius: 12px;
     font-size: 11px;
-    background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
-    color: #fff;
-    border: 1px solid #333;
+    font-weight: 700;
 }
 
-.comment-input {
-    flex: 1;
-    height: 40px;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #fff;
-    font-size: 14px;
+.stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
 }
 
-.comment-input::placeholder {
-    color: #555;
-}
-
-.comment-submit {
-    padding: 8px 16px;
-    background: transparent;
-    border: 1px solid #333;
-    border-radius: 20px;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.comment-submit:hover:not(:disabled) {
-    background: #fff;
-    color: #000;
-}
-
-.comment-submit:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.comments-list {
+.stat-box {
+    width: 50%;
+    max-width: 200px;
+    background-color: #121212;
+    border-radius: 16px;
+    padding: 12px 0; /* Reduced padding to lower height */
     display: flex;
     flex-direction: column;
-    gap: 12px;
-}
-
-.comment-item {
-    display: flex;
-    gap: 10px;
-}
-
-.comment-avatar-small {
-    display: none;
-}
-
-/* Replaced by .comment-avatar.small */
-
-.comment-header-small {
-    display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 2px;
+    justify-content: center;
 }
 
-.comment-author-name {
+.stat-num {
+    font-size: 22px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #71717A;
+    letter-spacing: 0.5px;
+}
+
+/* Tabs */
+.tabs-nav {
+    display: flex;
+    border-bottom: 1px solid #27272A;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 16px 0;
+    background: transparent;
+    border: none;
+    color: #71717A;
     font-size: 14px;
     font-weight: 600;
-    color: #fff;
-}
-
-.comment-time {
-    font-size: 13px;
-    color: #555;
-}
-
-.comment-text-small {
-    font-size: 14px;
-    color: #ccc;
-    line-height: 1.4;
-    margin: 0;
-}
-
-.no-comments {
-    padding: 20px 0;
+    cursor: pointer;
+    position: relative;
     text-align: center;
 }
 
-.no-comments p {
+.tab-btn.active {
+    color: #ffffff;
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #ffffff;
+}
+
+/* Feed */
+.feed-section {
+    padding: 24px 20px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.feed-card {
+    background-color: #121212;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 16px;
+}
+
+.author-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.author-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #E7E5E4; /* Light tone for generic */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #d97706;
+}
+
+.author-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.author-meta {
+    display: flex;
+    flex-direction: column;
+}
+
+.author-name {
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.post-time {
+    color: #A1A1AA;
+    font-size: 13px;
+}
+
+.more-options-btn {
+    background: transparent;
+    border: none;
+    color: #71717A;
+    padding: 4px;
+    cursor: pointer;
+}
+
+.card-body {
+    padding: 0 16px 16px;
+}
+
+.post-title {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 6px 0;
+}
+
+.post-desc {
+    color: #A1A1AA;
     font-size: 14px;
-    color: #555;
+    line-height: 1.5;
     margin: 0;
 }
 
-.post-actions {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-top: 12px;
+/* Media */
+.card-media {
+    position: relative;
+    width: 100%;
+    /* No padding, flush to edges of card */
 }
 
-.action-btn {
+.card-media img {
+    width: 100%;
+    display: block;
+    object-fit: cover;
+    aspect-ratio: 1.2;
+}
+
+.status-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 0;
-    background: transparent;
-    border: none;
-    color: #fff;
-    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.transit {
+    background-color: #3B82F6;
+    color: #ffffff;
+}
+
+.status-badge.customs {
+    background-color: #F59E0B;
+    color: #ffffff;
+}
+
+.value-tag {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background-color: rgba(24, 24, 27, 0.85); /* #18181b with opacity */
+    backdrop-filter: blur(8px);
+    padding: 10px 16px;
+    border-top-left-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.value-lbl {
+    font-size: 9px;
+    font-weight: 600;
+    color: #A1A1AA;
+    letter-spacing: 1px;
+}
+
+.value-amt {
+    font-size: 18px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.empty-feed {
+    text-align: center;
+    padding: 60px 0;
+    color: #A1A1AA;
+    font-family: 'Golos Text', 'Inter', sans-serif;
+}
+
+.empty-icon {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    opacity: 0.8;
+}
+
+.empty-feed p {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 8px 0;
+}
+
+.empty-subtext {
     font-size: 14px;
-    transition: all 0.2s;
+    color: #71717A;
 }
 
-.action-btn:hover {
-    opacity: 0.7;
+.loading-state {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.action-btn svg {
-    width: 24px;
-    height: 24px;
+.loader {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #111;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.padding-bottom {
+    height: 100px;
 }
 </style>

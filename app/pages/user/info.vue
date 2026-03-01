@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { useToast } from '~/composables/useToast'
+
 definePageMeta({
     layout: 'user'
 })
-
-import { useToast } from '~/composables/useToast'
 
 const toast = useToast()
 const router = useRouter()
@@ -15,10 +15,10 @@ async function copyAddress() {
     try {
         await navigator.clipboard.writeText(warehouseAddress)
         copied.value = true
-        toast.success('Адрес скопирован!', { position: 'top-center' })
+        toast.success('Адрес скопирован!')
         setTimeout(() => { copied.value = false }, 2000)
     } catch (error) {
-        toast.error('Ошибка при копировании', { position: 'top-center' })
+        toast.error('Ошибка копирования')
     }
 }
 
@@ -28,121 +28,121 @@ function goBack() {
 </script>
 
 <template>
-    <div class="threads-container">
-        <!-- Header -->
-        <div class="threads-header">
-            <button @click="goBack" class="threads-back-btn">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 12H5M12 19l-7-7 7-7"/>
-                </svg>
-            </button>
-            <h1 class="threads-title">Информация</h1>
-            <div class="threads-header-spacer"></div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="threads-content">
-            <!-- Warehouse Card -->
-            <div class="threads-card">
-                <div class="threads-card-header">
-                    <div class="threads-avatar">
-                        <span>🇨🇳</span>
-                    </div>
-                    <div class="threads-card-info">
-                        <span class="threads-card-title">Склад в Китае</span>
-                        <span class="threads-card-subtitle">Адрес для доставки</span>
-                    </div>
-                </div>
-                
-                <div class="threads-address-box">
-                    <p class="threads-address-text">{{ warehouseAddress }}</p>
-                </div>
-
-                <button @click="copyAddress" class="threads-copy-btn" :class="{ 'copied': copied }">
-                    <svg v-if="!copied" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+    <div class="info-page">
+        <div class="info-container">
+            <!-- Header -->
+            <div class="info-header">
+                <button @click="goBack" class="back-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path d="M19 12H5M12 19l-7-7 7-7" />
                     </svg>
-                    <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M20 6L9 17l-5-5"/>
-                    </svg>
-                    <span>{{ copied ? 'Скопировано' : 'Копировать адрес' }}</span>
                 </button>
+                <h1 class="header-title">Информация о складе</h1>
+                <div class="header-spacer"></div>
             </div>
 
-            <!-- Divider -->
-            <div class="threads-divider"></div>
-
-            <!-- Instructions -->
-            <div class="threads-section">
-                <h2 class="threads-section-title">Как заказать</h2>
-                
-                <div class="threads-steps">
-                    <div class="threads-step">
-                        <div class="threads-step-number">1</div>
-                        <div class="threads-step-content">
-                            <span class="threads-step-title">Скопируйте адрес</span>
-                            <span class="threads-step-desc">Нажмите кнопку выше</span>
+            <!-- Content -->
+            <div class="info-content">
+                <!-- Warehouse Card -->
+                <div class="warehouse-card">
+                    <div class="card-top">
+                        <div class="flag-icon">🇨🇳</div>
+                        <div class="title-info">
+                            <span class="main-title">Склад в Китае</span>
+                            <span class="sub-title">Адрес доставки</span>
                         </div>
                     </div>
 
-                    <div class="threads-step">
-                        <div class="threads-step-number">2</div>
-                        <div class="threads-step-content">
-                            <span class="threads-step-title">Закажите товар</span>
-                            <span class="threads-step-desc">Укажите адрес при заказе в Китае</span>
-                        </div>
+                    <div class="address-display">
+                        <p class="address-text">{{ warehouseAddress }}</p>
                     </div>
 
-                    <div class="threads-step">
-                        <div class="threads-step-number">3</div>
-                        <div class="threads-step-content">
-                            <span class="threads-step-title">Добавьте трек-код</span>
-                            <span class="threads-step-desc">В приложении AI-Cargo</span>
-                        </div>
-                    </div>
+                    <button @click="copyAddress" class="copy-action-btn" :class="{ 'copied': copied }">
+                        <svg v-if="!copied" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                        </svg>
+                        <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                        <span>{{ copied ? 'Скопирован в буфер' : 'Скопировать адрес' }}</span>
+                    </button>
+                </div>
 
-                    <div class="threads-step">
-                        <div class="threads-step-number">4</div>
-                        <div class="threads-step-content">
-                            <span class="threads-step-title">Отслеживайте</span>
-                            <span class="threads-step-desc">Мы уведомим о прибытии</span>
+                <!-- How to Order -->
+                <div class="instructions-section">
+                    <h2 class="section-title">Как заказать</h2>
+
+                    <div class="guide-steps">
+                        <div class="guide-step">
+                            <div class="step-num">01</div>
+                            <div class="step-text">
+                                <span class="step-title">Скопируйте адрес склада</span>
+                                <p class="step-desc">Используйте китайский адрес, указанный выше, для ваших заказов.</p>
+                            </div>
+                        </div>
+
+                        <div class="guide-step">
+                            <div class="step-num">02</div>
+                            <div class="step-text">
+                                <span class="step-title">Сделайте заказ</span>
+                                <p class="step-desc">Укажите этот склад в качестве пункта доставки в Китае.</p>
+                            </div>
+                        </div>
+
+                        <div class="guide-step">
+                            <div class="step-num">03</div>
+                            <div class="step-text">
+                                <span class="step-title">Зарегистрируйте трек-код</span>
+                                <p class="step-desc">Добавьте трек-номер на вкладке «Трекинг», чтобы отслеживать его.</p>
+                            </div>
+                        </div>
+
+                        <div class="guide-step">
+                            <div class="step-num">04</div>
+                            <div class="step-text">
+                                <span class="step-title">Получайте уведомления</span>
+                                <p class="step-desc">Мы уведомим вас, как только ваш груз прибудет на наш хаб.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <button @click="goBack" class="bottom-back-btn">Вернуться в приложение</button>
             </div>
-
-            <!-- Divider -->
-            <div class="threads-divider"></div>
-
-            <!-- Back Button -->
-            <button @click="goBack" class="threads-secondary-btn">
-                Назад
-            </button>
         </div>
     </div>
 </template>
 
 <style scoped>
-.threads-container {
+.info-page {
+    background-color: #0d1117;
     min-height: 100vh;
-    background: #000;
-    padding-bottom: 40px;
+    color: #e6edf3;
+    font-family: 'Inter', -apple-system, sans-serif;
+    padding-bottom: 60px;
 }
 
-.threads-header {
+.info-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.info-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 16px 20px;
-    border-bottom: 1px solid #222;
+    background-color: #0d1117;
     position: sticky;
     top: 0;
-    background: #000;
     z-index: 100;
 }
 
-.threads-back-btn {
+.back-btn {
     width: 40px;
     height: 40px;
     display: flex;
@@ -150,195 +150,177 @@ function goBack() {
     justify-content: center;
     background: transparent;
     border: none;
-    color: #fff;
+    color: white;
     cursor: pointer;
     border-radius: 50%;
-    transition: background 0.2s;
 }
 
-.threads-back-btn:hover {
-    background: #222;
+.back-btn:hover {
+    background-color: #161b22;
 }
 
-.threads-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #fff;
+.header-title {
+    font-size: 17px;
+    font-weight: 800;
     margin: 0;
 }
 
-.threads-header-spacer {
+.header-spacer {
     width: 40px;
 }
 
-.threads-content {
-    padding: 20px;
-    max-width: 600px;
-    margin: 0 auto;
+.info-content {
+    padding: 24px 16px;
 }
 
-.threads-card {
-    background: #000;
-    border: 1px solid #333;
-    border-radius: 16px;
-    padding: 20px;
+/* Warehouse Card */
+.warehouse-card {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 40px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
-.threads-card-header {
+.card-top {
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin-bottom: 20px;
+    gap: 16px;
+    margin-bottom: 24px;
 }
 
-.threads-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: #222;
+.flag-icon {
+    width: 52px;
+    height: 52px;
+    background-color: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 24px;
 }
 
-.threads-card-info {
+.title-info {
     display: flex;
     flex-direction: column;
-    gap: 2px;
 }
 
-.threads-card-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #fff;
+.main-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: white;
 }
 
-.threads-card-subtitle {
+.sub-title {
     font-size: 14px;
-    color: #777;
+    color: #8b949e;
+    font-weight: 600;
 }
 
-.threads-address-box {
-    background: #111;
+.address-display {
+    background-color: #0d1117;
     border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+    border: 1px solid #30363d;
 }
 
-.threads-address-text {
+.address-text {
     font-size: 15px;
-    color: #fff;
-    line-height: 1.5;
+    line-height: 1.6;
+    color: white;
     margin: 0;
     word-break: break-all;
 }
 
-.threads-copy-btn {
+.copy-action-btn {
     width: 100%;
-    height: 48px;
+    height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    background: #fff;
+    gap: 12px;
+    background-color: #2563eb;
+    color: white;
     border: none;
     border-radius: 12px;
-    color: #000;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
 }
 
-.threads-copy-btn:hover {
-    background: #e5e5e5;
+.copy-action-btn.copied {
+    background-color: #10b981;
 }
 
-.threads-copy-btn.copied {
-    background: #222;
-    color: #fff;
+/* Guide Section */
+.section-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #8b949e;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
 }
 
-.threads-divider {
-    height: 1px;
-    background: #222;
-    margin: 24px 0;
-}
-
-.threads-section {
-    padding: 0;
-}
-
-.threads-section-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #fff;
-    margin: 0 0 20px 0;
-}
-
-.threads-steps {
+.guide-steps {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 32px;
 }
 
-.threads-step {
+.guide-step {
     display: flex;
+    gap: 20px;
     align-items: flex-start;
-    gap: 14px;
 }
 
-.threads-step-number {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #222;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 600;
-    flex-shrink: 0;
+.step-num {
+    font-size: 24px;
+    font-weight: 900;
+    color: #2563eb;
+    opacity: 0.5;
+    font-family: monospace;
 }
 
-.threads-step-content {
+.step-text {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding-top: 4px;
+    gap: 4px;
 }
 
-.threads-step-title {
-    font-size: 15px;
-    font-weight: 500;
-    color: #fff;
+.step-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: white;
 }
 
-.threads-step-desc {
+.step-desc {
     font-size: 14px;
-    color: #777;
+    color: #8b949e;
+    line-height: 1.5;
+    margin: 0;
 }
 
-.threads-secondary-btn {
+.bottom-back-btn {
     width: 100%;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    height: 52px;
     background: transparent;
-    border: 1px solid #333;
+    border: 1px solid #30363d;
     border-radius: 12px;
-    color: #fff;
+    color: #8b949e;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
+    margin-top: 48px;
     transition: all 0.2s;
 }
 
-.threads-secondary-btn:hover {
-    background: #111;
+.bottom-back-btn:hover {
     border-color: #444;
+    color: white;
 }
 </style>

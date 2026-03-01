@@ -1,8 +1,8 @@
 import axios from "axios";
 
 export default defineNuxtPlugin(() => {
-  const tokenCookie = useCookie("token", { maxAge: 15 * 60 });
-  const refreshTokenCookie = useCookie("refreshToken", { maxAge: 21 * 24 * 60 * 60 });
+  const tokenCookie = useCookie("token", { maxAge: 15 * 60, path: '/' });
+  const refreshTokenCookie = useCookie("refreshToken", { maxAge: 21 * 24 * 60 * 60, path: '/' });
 
   const config = useRuntimeConfig();
 
@@ -12,12 +12,12 @@ export default defineNuxtPlugin(() => {
 
   // Request interceptor - барлық сұраныстарға token қосу
   instance.interceptors.request.use(
-    (config) => {
+    (reqConfig) => {
       const token = tokenCookie.value;
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+      if (token && reqConfig.headers) {
+        reqConfig.headers.Authorization = `Bearer ${token}`;
       }
-      return config;
+      return reqConfig;
     },
     (error) => {
       return Promise.reject(error);
@@ -36,37 +36,49 @@ export default defineNuxtPlugin(() => {
 
         const refreshToken = refreshTokenCookie.value;
 
-        // Refresh token жоқ болса - login-ге redirect
+        // Refresh token жоқ болса - auth/login-ге жіберу (клиент жағында ғана)
         if (!refreshToken) {
           tokenCookie.value = null;
           refreshTokenCookie.value = null;
-          navigateTo("/auth/login");
+          if (process.client) {
+            window.location.href = '/auth/login';
+          }
           return Promise.reject(error);
         }
 
         try {
           // Refresh endpoint-ке сұраныс жіберу
+          // Custom axios instance қолданбау керек, өйткені ол бесконечный циклге түсіруі мүмкін
           const response = await axios.post(
-            `${config.public.apiBase}auth/refresh`,
+            `${config.public.apiBase}/auth/refresh`,
             { refreshToken }
           );
 
-          const { accessToken, refreshToken: newRefreshToken } = response.data;
+          const newAccessToken = response.data.accessToken || response.data.access_token;
+          const newRefreshToken = response.data.refreshToken || response.data.refresh_token;
 
-          // Жаңа токендерді сақтау
-          tokenCookie.value = accessToken;
-          if (newRefreshToken) {
-            refreshTokenCookie.value = newRefreshToken;
+          if (newAccessToken) {
+            // Жаңа токендерді сақтау
+            tokenCookie.value = newAccessToken;
+            if (newRefreshToken) {
+              refreshTokenCookie.value = newRefreshToken;
+            }
+
+            // Бастапқы сұранысты жаңа токенмен қайта жіберу
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            }
+            return instance(originalRequest);
+          } else {
+            throw new Error('No access token returned');
           }
-
-          // Бастапқы сұранысты жаңа токенмен қайта жіберу
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-          return instance(originalRequest);
         } catch (refreshError) {
-          // Refresh сәтсіз болса - login-ге redirect
+          // Refresh сәтсіз болса - тазалап login-ге жіберу
           tokenCookie.value = null;
           refreshTokenCookie.value = null;
-          navigateTo("/auth/login");
+          if (process.client) {
+            window.location.href = '/auth/login';
+          }
           return Promise.reject(refreshError);
         }
       }

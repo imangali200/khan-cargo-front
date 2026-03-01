@@ -8,15 +8,15 @@
 html,
 body,
 #__nuxt {
-  background: #f6f6f9 !important;
-  color: #242424;
+  background: #000000 !important;
+  color: #ffffff;
   min-height: 100vh;
   min-height: 100dvh;
   width: 100%;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Golos Text', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 * {

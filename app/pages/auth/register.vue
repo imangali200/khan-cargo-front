@@ -2,81 +2,153 @@
     <div class="auth-page">
         <div class="auth-card">
             <header class="auth-header">
-                <button @click="$router.back()" class="mini-back-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M19 12H5m7-7-7 7 7 7" />
+                <div class="brand-group">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round" class="truck-icon-small">
+                        <rect x="1" y="3" width="15" height="13"></rect>
+                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                        <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                        <circle cx="18.5" cy="18.5" r="2.5"></circle>
                     </svg>
-                </button>
-                <h1 class="brand-title">Регистрация</h1>
-                <p class="brand-subtitle">Создайте аккаунт в Ai-Market</p>
+                    <h2 class="brand-name">CargoTrack</h2>
+                </div>
+                <h1 class="page-title">Регистрация</h1>
+                <p class="page-subtitle">Создайте аккаунт для управления логистикой и отслеживания грузов.</p>
             </header>
 
             <main class="auth-body">
-                <div class="tabs">
-                    <RouterLink to="/auth/login" class="auth-tab">Вход</RouterLink>
-                    <button class="auth-tab active">Регистрация</button>
-                </div>
-
                 <form @submit.prevent="postRegister" class="form-container">
+                    <div class="input-row">
+                        <div class="input-wrapper">
+                            <label>Имя</label>
+                            <div class="input-inner">
+                                <span class="input-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                </span>
+                                <input v-model="name" type="text" placeholder="Имя" />
+                            </div>
+                        </div>
+
+                        <div class="input-wrapper">
+                            <label>Фамилия</label>
+                            <div class="input-inner">
+                                <span class="input-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                </span>
+                                <input v-model="surname" type="text" placeholder="Фамилия" />
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="input-wrapper">
                         <label>Номер телефона</label>
                         <div class="input-inner">
-                            <span class="prefix">🇰🇿</span>
+                            <span class="input-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                                    </path>
+                                </svg>
+                            </span>
                             <input ref="phoneInput" type="text" placeholder="8 (000) 000-00-00" />
+                        </div>
+                    </div>
+
+                    <div class="input-row">
+                        <div class="input-wrapper">
+                            <label>Telegram ник</label>
+                            <div class="input-inner">
+                                <span class="input-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M22 2L2 10.5L11 13L22 2Z" fill="currentColor"></path>
+                                        <path d="M11 13L14 22L22 2L11 13Z" fill="currentColor"></path>
+                                    </svg>
+                                </span>
+                                <input v-model="telegramUsername" type="text" placeholder="@username" />
+                            </div>
+                        </div>
+
+                        <div class="input-wrapper">
+                            <label>Ваш код</label>
+                            <div class="input-inner">
+                                <span class="input-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                    </svg>
+                                </span>
+                                <input v-model="codeUser" type="text" placeholder="Код" @input="ensureKhanPrefix" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-wrapper">
+                        <label>Пароль</label>
+                        <div class="input-inner">
+                            <span class="input-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                            </span>
+                            <input v-model="password" :type="showPassword ? 'text' : 'password'"
+                                placeholder="Придумайте пароль" />
+                            <button type="button" class="view-pass" @click="showPassword = !showPassword">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
                         </div>
                     </div>
 
                     <div class="input-wrapper">
                         <label>Выберите склад</label>
                         <div class="input-inner select-inner">
+                            <span class="input-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                            </span>
                             <select v-model="selectBranch">
                                 <option value="">Выберите город</option>
-                                <option v-for="branch in branches" :key="branch.id" :value="branch.branchName">
+                                <option v-for="branch in branches" :key="branch.id" :value="branch.id">
                                     {{ branch.branchName }}
                                 </option>
                             </select>
                         </div>
                     </div>
 
-                    <div class="input-row">
-                        <div class="input-wrapper">
-                            <label>Ваш код</label>
-                            <div class="input-inner">
-                                <input v-model="codeUser" type="text" placeholder="Ai-000" @input="ensureAiPrefix" />
-                            </div>
-                        </div>
-                        <div class="input-wrapper">
-                            <label>Имя</label>
-                            <div class="input-inner">
-                                <input v-model="name" type="text" placeholder="Имя" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="input-wrapper">
-                        <label>Фамилия</label>
-                        <div class="input-inner">
-                            <input v-model="surname" type="text" placeholder="Фамилия" />
-                        </div>
-                    </div>
-
-                    <div class="input-wrapper" :class="{ error: errorMessage }">
-                        <label>Пароль</label>
-                        <div class="input-inner">
-                            <input v-model="password" type="password" placeholder="Придумайте пароль" />
-                        </div>
-                        <span v-if="errorMessage" class="error-msg">{{ errorMessage }}</span>
-                    </div>
-
                     <button type="submit" class="submit-btn" :disabled="isLoading">
                         <span v-if="!isLoading">Зарегистрироваться</span>
+                        <svg v-if="!isLoading" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" class="btn-arrow">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
                         <div v-else class="loader"></div>
                     </button>
                 </form>
             </main>
 
             <footer class="auth-footer">
-                <p>Уже есть аккаунт? <RouterLink to="/auth/login">Войти</RouterLink></p>
+                <p>Уже есть аккаунт? <RouterLink to="/auth/login">Войти</RouterLink>
+                </p>
             </footer>
         </div>
     </div>
@@ -107,29 +179,31 @@ function getRedirectByRole(role: string): string {
 const { $axios } = useNuxtApp();
 const phoneNumber = ref<string>("");
 const selectBranch = ref<string>("");
-const codeUser = ref<string>("Ai-");
+const codeUser = ref<string>("Khan-");
 const name = ref<string>("");
 const surname = ref<string>("");
+const telegramUsername = ref<string>("");
 const password = ref<string>("");
+const showPassword = ref<boolean>(false);
 const errorMessage = ref<string>("");
 const isLoading = ref<boolean>(false);
 const branches = ref<Branch[]>([]);
 
-function ensureAiPrefix() {
-    if (!codeUser.value.startsWith("Ai-")) {
-        codeUser.value = "Ai-" + codeUser.value.replace(/^Ai-?/i, "");
+function ensureKhanPrefix() {
+    if (!codeUser.value.startsWith("Khan-")) {
+        codeUser.value = "Khan-" + codeUser.value.replace(/^Khan-?/i, "");
     }
 }
 
 async function getBranches() {
     try {
-        const res = await $axios.get("branch");
-        branches.value = res.data;
+        const res = await useApi().branches.findAll();
+        branches.value = res.data.map(b => ({ id: b.id, branchName: b.name }));
     } catch { }
 }
 
 async function postRegister() {
-    if (!phoneNumber.value || !codeUser.value || !name.value || !surname.value || !selectBranch.value || !password.value) {
+    if (!phoneNumber.value || !name.value || !surname.value || !selectBranch.value || !password.value || !codeUser.value) {
         errorMessage.value = "Заполните все поля";
         return;
     }
@@ -145,22 +219,23 @@ async function postRegister() {
     }
 
     try {
-        const response = await $axios.post("auth/register", {
-            phoneNumber: cleanPhone,
-            code: codeUser.value,
+        const response = await useApi().auth.signUp({
             name: name.value,
-            surname: surname.value,
-            branch: selectBranch.value,
+            lastName: surname.value,
+            phoneNumber: cleanPhone,
+            userCode: codeUser.value,
             password: password.value,
+            role: "user",
+            branchId: Number(selectBranch.value) || undefined,
+            telegramUsername: telegramUsername.value,
         });
 
         if (response.data.accessToken) {
-            const token = useCookie("token", { maxAge: 15 * 60 });
-            const refreshToken = useCookie("refreshToken", { maxAge: 21 * 24 * 60 * 60 });
+            const token = useCookie("token", { maxAge: 15 * 60, path: '/' });
+            const refreshToken = useCookie("refreshToken", { maxAge: 21 * 24 * 60 * 60, path: '/' });
             token.value = response.data.accessToken;
             refreshToken.value = response.data.refreshToken;
 
-            // Decode token to determine role-based redirect
             try {
                 const payload = jwtDecode<myJwtPayload>(response.data.accessToken);
                 return navigateTo(getRedirectByRole(payload.role));
@@ -194,192 +269,267 @@ onMounted(() => {
 <style scoped>
 .auth-page {
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-color: #0d1117;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    position: relative;
-    overflow: hidden;
-}
-
-.auth-page::before {
-    content: '';
-    position: absolute;
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-    border-radius: 50%;
-    top: -200px;
-    right: -200px;
-    animation: float 6s ease-in-out infinite;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(30px); }
+    padding: 40px 20px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .auth-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
     width: 100%;
-    max-width: 460px;
-    border-radius: 24px;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-    padding: 40px 32px;
-    animation: slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-    position: relative;
-    z-index: 1;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(40px); }
-    to { opacity: 1; transform: translateY(0); }
+    max-width: 480px;
 }
 
 .auth-header {
-    text-align: center;
     margin-bottom: 32px;
-    position: relative;
 }
 
-.mini-back-btn {
-    position: absolute;
-    left: 0;
-    top: -8px;
-    background: rgba(102, 126, 234, 0.1);
-    border: 1px solid rgba(102, 126, 234, 0.2);
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
+.brand-group {
     display: flex;
     align-items: center;
-    justify-content: center;
-    color: #667eea;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 10px;
+    margin-bottom: 24px;
 }
 
-.mini-back-btn:hover { background: rgba(102, 126, 234, 0.15); transform: translateX(-3px); }
-.mini-back-btn:active { transform: translateX(-1px); }
-
-.brand-title { 
-    font-size: 28px; 
-    font-weight: 900; 
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 0 0 8px; 
+.truck-icon-small {
+    width: 24px;
+    height: 24px;
 }
-.brand-subtitle { font-size: 14px; color: #757575; font-weight: 500; margin: 0; }
 
-.tabs {
+.brand-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+}
+
+.page-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 12px;
+}
+
+.page-subtitle {
+    font-size: 15px;
+    color: #8b949e;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.form-container {
     display: flex;
-    background: rgba(0, 0, 0, 0.04);
-    padding: 5px;
-    border-radius: 14px;
-    margin-bottom: 32px;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.input-wrapper {
+    display: flex;
+    flex-direction: column;
     gap: 8px;
 }
 
-.auth-tab {
-    flex: 1;
-    padding: 12px 16px;
-    text-align: center;
-    border-radius: 12px;
+.input-wrapper label {
     font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    text-decoration: none;
-    color: #999;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 2px solid transparent;
+    font-weight: 500;
+    color: #8b949e;
 }
-
-.auth-tab.active {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: #fff;
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-}
-
-.form-container { display: flex; flex-direction: column; gap: 18px; }
-
-.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-
-.input-wrapper { display: flex; flex-direction: column; gap: 8px; }
-.input-wrapper label { font-size: 13px; font-weight: 700; color: #333; margin-left: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
 
 .input-inner {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    height: 48px;
+    padding: 0 14px;
     display: flex;
     align-items: center;
-    background: rgba(0, 0, 0, 0.02);
-    border: 2px solid rgba(0, 0, 0, 0.08);
-    border-radius: 14px;
-    padding: 0 16px;
-    height: 54px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 12px;
+    transition: all 0.2s ease;
 }
 
-.input-inner:focus-within { 
-    border-color: #667eea; 
-    background: rgba(102, 126, 234, 0.05); 
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); 
+.input-inner:focus-within {
+    border-color: #2563eb;
+    background-color: #1c2128;
 }
 
-.select-inner select {
-    width: 100%;
-    background: none;
+.input-icon {
+    color: #484f58;
+    display: flex;
+    align-items: center;
+}
+
+.input-inner input,
+.input-inner select {
+    flex: 1;
+    background: transparent;
     border: none;
     outline: none;
+    color: #ffffff;
     font-size: 14px;
-    font-weight: 600;
-    color: #333;
 }
 
-.select-inner select option { color: #333; background: #fff; }
+.input-inner input::placeholder {
+    color: #484f58;
+}
 
-.prefix { font-size: 16px; margin-right: 10px; }
-.input-inner input { flex: 1; background: none; border: none; outline: none; font-size: 16px; font-weight: 600; color: #333; }
-.input-inner input::placeholder { color: #ccc; }
+.view-pass {
+    background: none;
+    border: none;
+    color: #484f58;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.terms-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0;
+}
+
+.checkbox-wrapper {
+    position: relative;
+    width: 18px;
+    height: 18px;
+}
+
+.checkbox-wrapper input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+}
+
+.checkbox-custom {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 18px;
+    width: 18px;
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+}
+
+.checkbox-wrapper input:checked~.checkbox-custom {
+    background-color: #2563eb;
+    border-color: #2563eb;
+}
+
+.checkbox-wrapper input:checked~.checkbox-custom:after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 1px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.terms-row label {
+    font-size: 13px;
+    color: #8b949e;
+}
+
+.terms-row a {
+    color: #2563eb;
+    text-decoration: none;
+}
 
 .submit-btn {
-    height: 58px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
+    height: 52px;
+    background-color: #2563eb;
+    color: white;
     border: none;
-    border-radius: 14px;
+    border-radius: 8px;
     font-size: 16px;
-    font-weight: 800;
+    font-weight: 600;
     cursor: pointer;
-    margin-top: 8px;
-    box-shadow: 0 12px 30px rgba(102, 126, 234, 0.35);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    letter-spacing: 0.5px;
+    gap: 8px;
+    transition: background-color 0.2s ease;
+    margin-top: 10px;
 }
 
-.submit-btn:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(102, 126, 234, 0.45); }
-.submit-btn:active { transform: translateY(-1px); }
-.submit-btn:disabled { opacity: 0.6; transform: none; box-shadow: none; cursor: not-allowed; }
+.submit-btn:hover {
+    background-color: #1d4ed8;
+}
 
-.loader { width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
 
-.error-msg { font-size: 12px; color: #ef4444; font-weight: 700; margin-left: 2px; }
+.btn-arrow {
+    transition: transform 0.2s ease;
+}
 
-.auth-footer { margin-top: 36px; text-align: center; padding-top: 24px; border-top: 1px solid rgba(0, 0, 0, 0.06); }
-.auth-footer p { font-size: 14px; color: #757575; margin: 0; }
-.auth-footer a { color: #667eea; font-weight: 700; text-decoration: none; transition: color 0.2s; }
-.auth-footer a:hover { color: #764ba2; }
+.submit-btn:hover .btn-arrow {
+    transform: translateX(3px);
+}
+
+.auth-footer {
+    margin-top: 32px;
+    text-align: center;
+}
+
+.auth-footer p {
+    font-size: 14px;
+    color: #8b949e;
+}
+
+.auth-footer a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.loader {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 
 @media (max-width: 480px) {
-    .auth-card { padding: 28px 24px; }
-    .input-row { grid-template-columns: 1fr; }
-    .brand-title { font-size: 24px; }
+    .page-title {
+        font-size: 26px;
+    }
+
+    .auth-card {
+        padding: 28px 24px;
+    }
+
+    .input-row {
+        grid-template-columns: 1fr;
+    }
+
+    .brand-title {
+        font-size: 24px;
+    }
 }
 </style>

@@ -1,50 +1,43 @@
 <template>
-    <nav class="marketplace-bottom-nav">
+    <nav class="cargo-bottom-nav">
         <router-link to="/user" class="nav-item" :class="{ active: isActive('/user') }">
-            <div class="icon-container">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                </svg>
-            </div>
-            <span class="nav-label">Главная</span>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            </svg>
+            <span class="nav-label">Лента</span>
         </router-link>
-        
+
         <router-link to="/user/search" class="nav-item" :class="{ active: isActive('/user/search') }">
-            <div class="icon-container">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <circle cx="11" cy="11" r="8"/>
-                    <path d="m21 21-4.35-4.35"/>
-                </svg>
-            </div>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+            </svg>
             <span class="nav-label">Поиск</span>
         </router-link>
 
-        <router-link to="/user/create-post" class="nav-item nav-special">
-            <div class="special-icon-wrapper">
-                <svg class="nav-icon special-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5" y1="12" x2="19" y2="12"/>
+        <div class="nav-special">
+            <router-link to="/user/create-post" class="create-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
-            </div>
+            </router-link>
             <span class="nav-label">Создать</span>
-        </router-link>
+        </div>
 
-        <router-link to="/user/products" class="nav-item" :class="{ active: isActive('/user/products') }">
-            <div class="icon-container">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                </svg>
-            </div>
-            <span class="nav-label">Товары</span>
+        <router-link to="/user/tracking" class="nav-item" :class="{ active: isActive('/user/tracking') }">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+            </svg>
+            <span class="nav-label">Трекинг</span>
         </router-link>
 
         <router-link to="/user/me" class="nav-item" :class="{ active: isActive('/user/me') }">
-            <div class="icon-container">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                </svg>
-            </div>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
             <span class="nav-label">Профиль</span>
         </router-link>
     </nav>
@@ -56,22 +49,23 @@ const isActive = (path: string) => route.path === path
 </script>
 
 <style scoped>
-.marketplace-bottom-nav {
+.cargo-bottom-nav {
     position: fixed;
     bottom: 0;
-    left: 0;
-    right: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 680px;
     z-index: 1000;
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
-    border-top: 1px solid rgba(102, 126, 234, 0.1);
+    background: rgba(13, 17, 23, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     align-items: center;
     justify-content: space-around;
     padding: 8px 0;
     padding-bottom: calc(8px + env(safe-area-inset-bottom));
-    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .nav-item {
@@ -79,89 +73,57 @@ const isActive = (path: string) => route.path === path
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    gap: 4px;
     text-decoration: none;
-    gap: 6px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    color: #999;
-    padding: 8px 0;
+    color: #8b949e;
+    transition: all 0.2s ease;
 }
 
 .nav-item.active {
-    color: #667eea;
-}
-
-.icon-container {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.nav-item.active .icon-container {
-    background: rgba(102, 126, 234, 0.1);
-    border-radius: 12px;
-    color: #667eea;
-}
-
-.nav-item:active .icon-container {
-    transform: scale(0.85);
+    color: #2563eb;
 }
 
 .nav-icon {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
 }
 
 .nav-label {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
-    letter-spacing: -0.2px;
-}
-
-.nav-item.active {
-    color: #667eea;
-}
-
-.nav-item.active .nav-icon {
-    stroke: #667eea;
-    filter: drop-shadow(0 0 4px rgba(102, 126, 234, 0.2));
 }
 
 .nav-special {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
     position: relative;
-    top: -16px;
+    top: -12px;
 }
 
-.special-icon-wrapper {
-    width: 54px;
-    height: 54px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.create-btn {
+    width: 48px;
+    height: 48px;
+    background-color: #2563eb;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-    margin-bottom: -4px;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    border: 3px solid #fff;
+    color: white;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    transition: transform 0.2s ease;
+    text-decoration: none;
 }
 
-.nav-item.nav-special:hover .special-icon-wrapper {
-    transform: scale(1.1) translateY(-2px);
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.5);
-}
-
-.special-icon {
-    color: #fff;
-    width: 28px;
-    height: 28px;
+.create-btn:hover {
+    transform: scale(1.05);
 }
 
 .nav-special .nav-label {
-    margin-top: 10px;
-    font-weight: 700;
+    position: relative;
+    bottom: -4px;
+    color: #8b949e;
 }
 </style>

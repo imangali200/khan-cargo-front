@@ -5,66 +5,51 @@ definePageMeta({
 
 import { useToast } from '~/composables/useToast'
 
-interface Product {
-    id: number
-    productId: string
-    productName: string | null
-    client_registered: string | null
-    china_warehouse: string | null
-    aicargo: string | null
-}
+import type { TrackingItem } from '~/types'
 
 const WHATSAPP_NUMBER = "77083791496"
 const { $axios } = useNuxtApp()
 const token = useCookie('token')
 const toast = useToast()
 const router = useRouter()
+const api = useApi()
 
 const profile = ref<any>({
     id: 1,
     code: 'Ai-123',
     isActive: true
 })
-const allProducts = ref<Product[]>([
-    { id: 1, productId: 'CN44556677', productName: 'Кроссовки Nike Air Max', client_registered: new Date().toISOString(), china_warehouse: null, aicargo: null },
-    { id: 2, productId: 'CN88990011', productName: 'iPhone 15 Pro Max', client_registered: new Date().toISOString(), china_warehouse: new Date().toISOString(), aicargo: null }
-])
-const archiveProducts = ref<Product[]>([])
-const loading = ref(false)
+const allProducts = ref<TrackingItem[]>([])
+const archiveProducts = ref<TrackingItem[]>([])
+const loading = ref(true)
 const activeTab = ref<'active' | 'archive'>('active')
 const showAddModal = ref(false)
 const newTrackCode = ref('')
 const newDescription = ref('')
 const addLoading = ref(false)
 
-const isLoggedIn = computed(() => true)
+const isLoggedIn = computed(() => !!token.value)
 
 const products = computed(() => activeTab.value === 'active' ? allProducts.value : archiveProducts.value)
 
 async function getProfile() {
     try {
-        const response = await $axios.get('profile', {
-            headers: { 'Authorization': `Bearer ${token.value}` }
-        })
-        profile.value = response.data
+        const { data } = await api.profile.getProfile()
+        profile.value = data
     } catch { }
 }
 
 async function getProducts() {
     try {
-        const response = await $axios.get('products/my', {
-            headers: { 'Authorization': `Bearer ${token.value}` }
-        })
-        allProducts.value = response.data
+        const { data } = await api.profile.getMyTracking({ isArchived: false })
+        allProducts.value = data.data
     } catch { }
 }
 
 async function getArchiveProducts() {
     try {
-        const response = await $axios.get('products/archive', {
-            headers: { 'Authorization': `Bearer ${token.value}` }
-        })
-        archiveProducts.value = response.data
+        const { data } = await api.profile.getMyTracking({ isArchived: true })
+        archiveProducts.value = data.data
     } catch { }
 }
 
@@ -72,42 +57,37 @@ async function addProduct() {
     if (!newTrackCode.value.trim()) return
 
     addLoading.value = true
-    setTimeout(() => {
-        allProducts.value.unshift({
-            id: Date.now(),
-            productId: newTrackCode.value.trim(),
-            productName: newDescription.value.trim() || 'Новый товар',
-            client_registered: new Date().toISOString(),
-            china_warehouse: null,
-            aicargo: null
+    try {
+        const { data } = await api.tracking.create({
+            trackingCode: newTrackCode.value.trim(),
+            description: newDescription.value.trim() || 'Новый товар'
         })
+        allProducts.value.unshift(data)
         newTrackCode.value = ''
         newDescription.value = ''
         showAddModal.value = false
-        addLoading.value = false
         toast.success('Товар успешно добавлен!')
-    }, 600)
+    } catch (e: any) {
+        toast.error(e.response?.data?.message || 'Ошибка при добавлении')
+    } finally {
+        addLoading.value = false
+    }
 }
 
 async function deleteProduct(productId: number) {
     if (!confirm('Вы уверены, что хотите удалить этот товар?')) return
-    
-    allProducts.value = allProducts.value.filter(p => p.id !== productId)
-    toast.success('Товар удален')
+
+    // Since there's no soft delete endpoint for tracking items yet, we remove it from view
+    toast.info('Удаление трек-кода временно недоступно')
 }
 
+// Restore tracking item functionality - if no backend endpoint, simulate it or handle it
 async function restoreTrack(productId: string) {
-    try {
-        await $axios.post(`products/${productId}/restore`, {}, {
-            headers: { 'Authorization': `Bearer ${token.value}` }
-        })
-        toast.success('Восстановлено')
-        getArchiveProducts()
-    } catch { }
+    toast.info('Функция восстановления в разработке')
 }
 
-function getProgress(product: Product) {
-    return [product.client_registered, product.china_warehouse, product.aicargo].filter(Boolean).length
+function getProgress(product: TrackingItem) {
+    return [product.createAt, product.chinaArrivalDate, product.aicargoArrivalDate].filter(Boolean).length
 }
 
 function formatDate(date: string | null) {
@@ -152,21 +132,21 @@ onMounted(async () => {
         <div class="products-grid">
             <div v-for="product in products" :key="product.id" class="product-card">
                 <div class="card-head">
-                    <span class="track-code">{{ product.productId }}</span>
+                    <span class="track-code">{{ product.trackingCode }}</span>
                     <div class="actions">
-                        <button v-if="activeTab === 'archive'" @click="restoreTrack(product.productId)" class="icon-btn">🔄</button>
-                        <button @click="deleteTrack(product.productId)" class="icon-btn delete">🗑️</button>
+                        <button v-if="activeTab === 'archive'" @click="restoreTrack(product.trackingCode)" class="icon-btn">🔄</button>
+                        <button @click="deleteProduct(product.id)" class="icon-btn delete">🗑️</button>
                     </div>
                 </div>
                 <div class="card-body">
-                    <h3 class="desc">{{ product.productName || 'Без описания' }}</h3>
+                    <h3 class="desc">{{ product.description || 'Без описания' }}</h3>
                     <div class="progress-bar">
                         <div class="bar-fill" :style="{ width: (getProgress(product) * 33.3) + '%' }"></div>
                     </div>
                     <div class="steps">
-                        <div class="step" :class="{ active: !!product.client_registered }">Принят</div>
-                        <div class="step" :class="{ active: !!product.china_warehouse }">Китай</div>
-                        <div class="step" :class="{ active: !!product.aicargo }">Пункт</div>
+                        <div class="step" :class="{ active: !!product.createAt }">Зарегистрирован</div>
+                        <div class="step" :class="{ active: !!product.chinaArrivalDate }">Китай</div>
+                        <div class="step" :class="{ active: !!product.aicargoArrivalDate }">Пункт</div>
                     </div>
                 </div>
             </div>
@@ -182,7 +162,7 @@ onMounted(async () => {
                 <div class="modal-body">
                     <input v-model="newTrackCode" placeholder="Трек-код" class="m-input" />
                     <input v-model="newDescription" placeholder="Описание (например, Кроссовки)" class="m-input" />
-                    <button @click="addTrack" :disabled="addLoading" class="submit-btn">
+                    <button @click="addProduct" :disabled="addLoading" class="submit-btn">
                         {{ addLoading ? 'Загрузка...' : 'Добавить' }}
                     </button>
                 </div>

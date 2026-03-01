@@ -20,15 +20,14 @@ import BottomNav from '~/components/BottomNav.vue'
     min-height: 100vh;
     min-height: 100dvh;
     width: 100%;
-    background: linear-gradient(135deg, #f5f7ff 0%, #f0f0f5 100%);
-    color: #242424;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    background-color: #0d1117;
+    color: #e6edf3;
+    font-family: 'Inter', -apple-system, sans-serif;
 }
 
 .user-main {
     flex: 1;
     padding-bottom: calc(85px + env(safe-area-inset-bottom, 0px));
-    padding-top: 24px;
 }
 
 .user-container {

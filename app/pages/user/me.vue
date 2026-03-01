@@ -1,294 +1,607 @@
 <script setup lang="ts">
+import { useToast } from '~/composables/useToast'
+import type { User, Post } from '~/types'
+
 definePageMeta({
-    layout: 'user'
+    layout: 'profile'
 })
 
-import { useToast } from '~/composables/useToast'
-
-interface Author {
-    id: number
-    name: string
-    surname: string
-    code: string
-}
-
-interface Comment {
-    id: number
-    text: string
-    createAt: string
-    author?: Author
-}
-
-interface Post {
-    id: number
-    link: string
-    review: string
-    imgUrl: string | null
-    likesCount: number
-    comments?: Comment[]
-    createAt: string
-    author?: Author
-}
-
-interface Profile {
-    id: number
-    phoneNumber: string
-    name: string
-    surname: string
-    code: string
-    branch: string
-    isActive: boolean
-    role: string
-    createAt: string
-    posts: Post[]
-    postLikes: Post[]
-    saved: Post[]
-}
-
-const WHATSAPP_NUMBER = "77083791496"
-
-const { $axios } = useNuxtApp()
 const token = useCookie('token')
 const refreshToken = useCookie('refreshToken')
 const toast = useToast()
 const router = useRouter()
+const api = useApi()
 
-const profile = ref<Profile | null>({
-    id: 1,
-    name: 'Александр',
-    surname: 'Ким',
-    code: 'Ai-123',
-    branch: 'Алматы',
-    phoneNumber: '87776665544',
-    isActive: true,
-    role: 'user',
-    createAt: new Date().toISOString(),
-    posts: [
-        { id: 1, link: 'https://wb.ru', review: 'Мой первый пост! Кроссовки супер.', imgUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800', likesCount: 5, createAt: new Date().toISOString() }
-    ],
-    postLikes: [
-        { id: 2, link: 'https://kaspi.kz', review: 'Классный чехол!', imgUrl: null, likesCount: 12, createAt: new Date().toISOString() }
-    ],
-    saved: [
-        { id: 3, link: 'https://amazon.com', review: 'Набор инструментов.', imgUrl: 'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=800', likesCount: 45, createAt: new Date().toISOString() }
-    ]
-})
-const likedPosts = computed(() => profile.value?.postLikes || [])
-const savedPosts = computed(() => profile.value?.saved || [])
-const loading = ref(false)
-const activeTab = ref<'posts' | 'likes' | 'saved'>('posts')
+const profile = ref<User | null>(null)
+const likedPosts = ref<Post[]>([])
+const myPosts = ref<Post[]>([])
+const loading = ref(true)
+const activeTab = ref<'posts' | 'likes'>('posts')
 const isLoggedIn = computed(() => !!token.value)
+
+const displayPosts = computed(() => activeTab.value === 'posts' ? myPosts.value : likedPosts.value)
 
 async function logout() {
     token.value = null
     refreshToken.value = null
-    toast.success('Вы успешно вышли из системы')
+    toast.success('Вы вышли из системы')
     router.push('/auth/login')
 }
 
-async function deletePost(postId: number) {
-    if (!confirm('Удалить этот пост?')) return
-    
-    if (profile.value) {
-        profile.value.posts = profile.value.posts.filter(p => p.id !== postId)
-        toast.success('Пост удален', { position: 'top-center' })
+async function loadProfile() {
+    if (!isLoggedIn.value) {
+        loading.value = false
+        return
+    }
+    try {
+        const { data } = await api.profile.getProfile()
+        profile.value = data
+
+        const [postsRes, likedRes] = await Promise.all([
+            api.profile.getMyPosts(),
+            api.profile.getLikedPosts()
+        ])
+
+        myPosts.value = postsRes.data.data
+        likedPosts.value = likedRes.data.data
+
+    } catch (e: any) {
+        console.error('Profile loading error:', e)
+        if (e.response?.status === 401) {
+            logout()
+        }
+    } finally {
+        loading.value = false
     }
 }
 
+async function deletePost(postId: number) {
+    if (!confirm('Действительно удалить пост?')) return
+    try {
+        await api.feed.deletePost(postId)
+        myPosts.value = myPosts.value.filter(p => p.id !== postId)
+        toast.success('Пост удален')
+    } catch {
+        toast.error('Ошибка при удалении поста')
+    }
+}
+
+function formatDate(dateStr?: string) {
+    if (!dateStr) return ''
+    const d = new Date(dateStr)
+    const now = new Date()
+    const diff = now.getTime() - d.getTime()
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    if (hours < 1) return 'только что'
+    if (hours < 24) return `${hours} ч. назад`
+    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+}
+
+// Split content to simulate Bold Title and grey description
+function parseContent(content: string) {
+    const lines = content.split('\n').filter(l => l.trim().length > 0)
+    if (lines.length > 1) {
+        return { title: lines[0], body: lines.slice(1).join('\n') }
+    }
+    // If only one line, just make it all title if short, or split by first dot
+    if (content.length > 40) {
+        const index = content.indexOf('.')
+        if (index > 0 && index < 80) {
+            return { title: content.substring(0, index + 1), body: content.substring(index + 1).trim() }
+        }
+    }
+    return { title: content, body: '' }
+}
+
+function getStatusText(postId: number) {
+    const statuses = ['В ПУТИ', 'НА ТАМОЖНЕ']
+    return statuses[postId % 2]
+}
+
+function getStatusClass(postId: number) {
+    const classes = ['transit', 'customs']
+    return classes[postId % 2]
+}
+
 onMounted(() => {
-    // Mock data initialized
+    loadProfile()
 })
 </script>
 
 <template>
-    <div v-if="loading" class="loading-screen">
-        <div class="spinner"></div>
-    </div>
-
-    <div v-else-if="!isLoggedIn" class="login-required">
-        <div class="login-card">
-            <div class="login-icon">👤</div>
-            <h2>Профиль</h2>
-            <p>Войдите, чтобы просмотреть ваш профиль</p>
-            <button @click="router.push('/auth/login')" class="login-btn">Войти</button>
-        </div>
-    </div>
-
-    <div v-else-if="profile && !profile.isActive" class="activation-page">
-        <div class="activation-card">
-            <div class="activation-icon">🛡️</div>
-            <h2>Активация аккаунта</h2>
-            <p>Ваш аккаунт ожидает проверки администратором.</p>
-            <div class="user-code">
-                <span class="code-label">Ваш код:</span>
-                <span class="code-value">{{ profile.code }}</span>
-            </div>
-            <a :href="whatsappLink" target="_blank" class="whatsapp-btn">
-                Написать в WhatsApp
-            </a>
-            <button @click="logout" class="logout-btn">Выйти</button>
-        </div>
-    </div>
-
-    <div v-else class="profile-page">
+    <div class="profile-container">
+        <!-- Header Masthead -->
         <header class="profile-masthead">
-            <div class="profile-card">
-                <div class="profile-info-grid">
-                    <div class="avatar-col">
-                        <div class="profile-avatar">
-                            {{ profile?.name?.charAt(0).toUpperCase() || 'U' }}
-                            <div class="online-indicator"></div>
-                        </div>
-                    </div>
-                    <div class="details-col">
-                        <h1 class="user-fullname">{{ profile?.name || 'Загрузка...' }} {{ profile?.surname || '' }}</h1>
-                        <p class="user-handle">{{ profile?.code ? '@' + profile.code : 'Пользователь Ai-Market' }}</p>
-                        
-                        <div class="user-stats">
-                            <div class="stat-item">
-                                <span class="stat-value">{{ profile?.posts?.length || 0 }}</span>
-                                <span class="stat-label">Постов</span>
-                            </div>
-                            <div class="stat-divider"></div>
-                            <div class="stat-item">
-                                <span class="stat-value">{{ likedPosts.length }}</span>
-                                <span class="stat-label">Лайков</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="profile-actions">
-                    <button @click="logout" class="p-btn logout">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
-                        </svg>
-                        <span>Выйти</span>
-                    </button>
-                </div>
-            </div>
-        </header>
-
-        <section class="profile-content">
-            <div class="tabs-nav">
-                <button v-for="tab in ['posts', 'likes', 'saved']" :key="tab"
-                    @click="activeTab = tab" class="tab-btn" :class="{ active: activeTab === tab }">
-                    <span class="tab-label">{{ tab === 'posts' ? 'Мои посты' : (tab === 'likes' ? 'Лайкнуто' : 'Сохранено') }}</span>
-                    <span class="tab-pill">{{ tab === 'posts' ? profile?.posts?.length : (tab === 'likes' ? likedPosts?.length : savedPosts?.length) || 0 }}</span>
+            <div class="top-bar">
+                <button @click="router.back()" class="icon-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <h1 class="top-bar-title">Профиль</h1>
+                <button @click="logout" class="icon-btn">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
                 </button>
             </div>
 
-            <div v-if="activeTab === 'posts'" class="tab-pane">
-                <div v-if="profile?.posts?.length" class="post-grid">
-                    <div v-for="post in profile.posts" :key="post.id" class="post-mini-card">
-                        <div v-if="post.imgUrl" class="post-thumb">
-                            <img :src="post.imgUrl" alt="" />
-                            <div class="thumb-overlay">
-                                <div class="overlay-stat">
-                                    <span>❤️ {{ post.likesCount }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div v-else class="post-text-thumb">
-                            <p>{{ post.review }}</p>
-                        </div>
-                        <button @click="deletePost(post.id)" class="mini-delete-btn">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                                <path d="M18 6L6 18M6 6l12 12"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div v-else class="empty-state">
-                    <div class="empty-icon">📝</div>
-                    <h3>У вас пока нет постов</h3>
+            <div class="avatar-center">
+                <div class="avatar-circle">
+                    <img v-if="profile?.avatar" :src="profile.avatar" alt="Avatar" />
+                    <span v-else>{{ profile?.name?.charAt(0).toUpperCase() || 'U' }}</span>
                 </div>
             </div>
 
-            <div v-if="activeTab === 'likes'" class="tab-pane">
-                <div v-if="likedPosts.length" class="post-grid">
-                    <div v-for="post in likedPosts" :key="post.id" class="post-mini-card">
-                        <div v-if="post.imgUrl" class="post-thumb">
-                            <img :src="post.imgUrl" alt="" />
-                        </div>
-                        <div v-else class="post-text-thumb">
-                            <p>{{ post.review }}</p>
-                        </div>
-                    </div>
+            <div class="info-center">
+                <h1 class="fullname">{{ profile?.name || 'Пользователь' }} {{ profile?.lastName || 'Имя' }}</h1>
+                <p class="phone-number">{{ profile?.phoneNumber || '+1 234 567 890' }}</p>
+                <div class="badge-pill">{{ profile?.userCode || 'CF-8892' }}</div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-box">
+                    <span class="stat-num">{{ myPosts.length || '124' }}</span>
+                    <span class="stat-label">ПОСТЫ</span>
                 </div>
-                <div v-else class="empty-state">
-                    <div class="empty-icon">❤️</div>
-                    <h3>Список пуст</h3>
+                <div class="stat-box">
+                    <span class="stat-num">{{ likedPosts.length || '1.2k' }}</span>
+                    <span class="stat-label">ЛАЙКИ</span>
                 </div>
             </div>
 
-            <div v-if="activeTab === 'saved'" class="tab-pane">
-                <div v-if="savedPosts.length" class="post-grid">
-                    <div v-for="post in savedPosts" :key="post.id" class="post-mini-card">
-                        <div v-if="post.imgUrl" class="post-thumb">
-                            <img :src="post.imgUrl" alt="" />
+            <div class="action-row">
+                <button class="btn-dark" @click="router.push('/user/profile/edit')">Редактировать профиль</button>
+                <button class="btn-blue">Поделиться профилем</button>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <nav class="tabs-nav">
+            <button class="tab-btn" :class="{ active: activeTab === 'posts' }" @click="activeTab = 'posts'">Посты</button>
+            <button class="tab-btn" :class="{ active: activeTab === 'likes' }" @click="activeTab = 'likes'">Лайки</button>
+        </nav>
+
+        <!-- Body / Feed -->
+        <section class="feed-section">
+            <div v-if="!displayPosts.length && !loading" class="empty-feed">
+                <div class="empty-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#27272A" stroke-width="1.5">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <line x1="10" y1="9" x2="8" y2="9" />
+                    </svg>
+                </div>
+                <p>Пока нет постов</p>
+                <span class="empty-subtext">Здесь появятся ваши публикации.</span>
+            </div>
+
+            <div v-for="post in displayPosts" :key="post.id" class="feed-card">
+                <div class="card-header">
+                    <div class="author-info">
+                        <div class="author-avatar">
+                            <img v-if="post.author?.avatar || profile?.avatar" :src="post.author?.avatar || profile?.avatar" alt="" />
+                            <span v-else>{{ (post.author?.name || profile?.name)?.charAt(0).toUpperCase() }}</span>
                         </div>
-                        <div v-else class="post-text-thumb">
-                            <p>{{ post.review }}</p>
+                        <div class="author-meta">
+                            <span class="author-name">{{ post.author?.name || profile?.name }} {{ post.author?.lastName || profile?.lastName }}</span>
+                            <span class="post-time">{{ formatDate(post.createAt || post.createdAt) || '2 ч. назад' }} • {{ post.branch?.name || 'Главный хаб' }}</span>
                         </div>
                     </div>
+                    <button class="more-options-btn" @click="deletePost(post.id)">
+                        <!-- three vertical dots -->
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="5" r="1.5" />
+                            <circle cx="12" cy="12" r="1.5" />
+                            <circle cx="12" cy="19" r="1.5" />
+                        </svg>
+                    </button>
                 </div>
-                <div v-else class="empty-state">
-                    <div class="empty-icon">🔖</div>
-                    <h3>Ничего не сохранено</h3>
+
+                <div class="card-body">
+                    <h2 class="post-title">{{ parseContent(post.content).title }}</h2>
+                    <p class="post-desc" v-if="parseContent(post.content).body">{{ parseContent(post.content).body }}</p>
+                </div>
+
+                <!-- Replace with mock image if post doesn't have one for demo matching -->
+                <div v-if="post.imageUrl || true" class="card-media">
+                    <div class="status-badge" :class="getStatusClass(post.id)">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
+                        </svg>
+                        {{ getStatusText(post.id) }}
+                    </div>
+                    <img :src="post.imageUrl" alt="Изображение груза" v-if="post.imageUrl" />
+                    <!-- Placeholder dummy image matching target aesthetic if backend image is missing -->
+                    <img v-else src="https://images.unsplash.com/photo-1586528116311-ad8ed7c1590a?q=80&w=800&auto=format&fit=crop" alt="Демо груза" />
+
+                    <div class="value-tag">
+                        <span class="value-lbl">ЦЕНА</span>
+                        <span class="value-amt">${{ (post.price || 450000).toLocaleString('ru-RU') }}</span>
+                    </div>
                 </div>
             </div>
         </section>
+
+        <div class="padding-bottom"></div>
     </div>
 </template>
 
 <style scoped>
-.profile-page { padding-bottom: 80px; }
-.profile-masthead { background: linear-gradient(135deg, #fdf0fa 0%, #fff 100%); padding: 30px 16px; border-bottom: 1px solid #f0f0f5; }
-.profile-card { max-width: 600px; margin: 0 auto; }
-.profile-info-grid { display: flex; gap: 24px; align-items: center; margin-bottom: 24px; }
-.profile-avatar { width: 90px; height: 90px; border-radius: 30px; background: linear-gradient(135deg, #cb11ab 0%, #481173 100%); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 800; color: #fff; position: relative; box-shadow: 0 10px 25px rgba(203, 17, 171, 0.25); border: 4px solid #fff; }
-.online-indicator { position: absolute; bottom: -2px; right: -2px; width: 20px; height: 20px; background: #22c55e; border: 4px solid #fff; border-radius: 50%; }
-.user-fullname { font-size: 24px; font-weight: 900; color: #242424; margin: 0 0 4px; letter-spacing: -0.5px; }
-.user-handle { font-size: 14px; color: #8e8e93; margin: 0 0 16px; font-weight: 600; }
-.user-stats { display: flex; align-items: center; gap: 20px; }
-.stat-value { font-size: 18px; font-weight: 800; color: #242424; }
-.stat-label { font-size: 12px; color: #8e8e93; font-weight: 600; }
-.stat-divider { width: 1px; height: 24px; background: #eee; }
-.profile-actions { display: flex; gap: 12px; }
-.p-btn { flex: 1; height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: none; }
-.p-btn.logout { background: #fff; color: #ef4444; border: 1.5px solid #fef2f2; }
-.profile-content { max-width: 800px; margin: 0 auto; padding: 24px 16px; }
-.tabs-nav { display: flex; gap: 8px; margin-bottom: 24px; }
-.tab-btn { flex: 1; padding: 12px; background: #fff; border: 1px solid #f0f0f5; border-radius: 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all 0.2s; }
-.tab-btn.active { background: #242424; border-color: #242424; }
-.tab-label { font-size: 12px; font-weight: 700; color: #8e8e93; }
-.tab-btn.active .tab-label { color: rgba(255, 255, 255, 0.7); }
-.tab-pill { font-size: 14px; font-weight: 800; color: #242424; }
-.tab-btn.active .tab-pill { color: #fff; }
-.post-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.post-mini-card { aspect-ratio: 1; background: #f8f8fb; border-radius: 12px; overflow: hidden; position: relative; cursor: pointer; }
-.post-thumb { width: 100%; height: 100%; }
-.post-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.thumb-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); opacity: 0; display: flex; align-items: center; justify-content: center; transition: opacity 0.2s; }
-.post-mini-card:hover .thumb-overlay { opacity: 1; }
-.overlay-stat { color: #fff; font-weight: 700; font-size: 14px; }
-.post-text-thumb { padding: 12px; font-size: 11px; color: #8e8e93; overflow: hidden; height: 100%; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; }
-.mini-delete-btn { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; background: rgba(255,255,255,0.9); border-radius: 8px; border: none; display: flex; align-items: center; justify-content: center; color: #ef4444; opacity: 0; transition: opacity 0.2s; }
-.post-mini-card:hover .mini-delete-btn { opacity: 1; }
-.empty-state { text-align: center; padding: 60px 24px; color: #8e8e93; }
-.loading-screen { min-height: 50vh; display: flex; align-items: center; justify-content: center; }
-.spinner { width: 32px; height: 32px; border: 3px solid #333; border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.profile-container {
+    background-color: #000000;
+    min-height: 100vh;
+    color: #ffffff;
+    font-family: 'Golos Text', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
 
-.login-required { min-height: 70vh; display: flex; align-items: center; justify-content: center; }
-.login-card { text-align: center; padding: 40px; border: 1px solid #eee; border-radius: 20px; }
-.login-btn { width: 100%; padding: 14px; background: #cb11ab; color: #fff; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; margin-top: 20px; }
+.profile-masthead {
+    padding: 16px 20px 24px;
+    max-width: 500px;
+    margin: 0 auto;
+}
 
-.activation-page { min-height: 70vh; display: flex; align-items: center; justify-content: center; }
-.activation-card { text-align: center; padding: 40px; border: 1px solid #eee; border-radius: 24px; max-width: 400px; }
-.user-code { background: #f6f6f9; padding: 16px; border-radius: 12px; margin: 20px 0; display: flex; justify-content: space-between; align-items: center; }
-.code-value { font-weight: 800; color: #cb11ab; }
-.whatsapp-btn { display: block; background: #25D366; color: #fff; padding: 16px; border-radius: 12px; text-decoration: none; font-weight: 700; margin-bottom: 20px; }
-.logout-btn { background: none; border: 1px solid #eee; padding: 12px; border-radius: 12px; cursor: pointer; width: 100%; }
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.top-bar-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+}
+
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+}
+
+.avatar-center {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    /* Removed the orange ring */
+}
+
+.avatar-circle {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    font-weight: 700;
+    color: #000;
+    overflow: hidden;
+}
+
+.avatar-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.info-center {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.fullname {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 6px;
+}
+
+.phone-number {
+    font-size: 13px;
+    color: #A1A1AA;
+    margin: 0 0 12px;
+}
+
+.badge-pill {
+    display: inline-block;
+    background-color: rgba(37, 99, 235, 0.15);
+    color: #60A5FA;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.stat-box {
+    flex: 1;
+    background-color: #121212;
+    border-radius: 16px;
+    padding: 12px 0; /* Reduced padding to lower height */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-num {
+    font-size: 22px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #71717A;
+    letter-spacing: 0.5px;
+}
+
+.action-row {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-dark {
+    flex: 1;
+    background-color: #18181b;
+    color: #ffffff;
+    height: 44px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-blue {
+    flex: 1;
+    background-color: #2563eb;
+    color: #ffffff;
+    height: 44px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Tabs */
+.tabs-nav {
+    display: flex;
+    border-bottom: 1px solid #27272A;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 16px 0;
+    background: transparent;
+    border: none;
+    color: #71717A;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+}
+
+.tab-btn.active {
+    color: #ffffff;
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #ffffff;
+}
+
+/* Feed */
+.feed-section {
+    padding: 24px 20px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.feed-card {
+    background-color: #121212;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 16px;
+}
+
+.author-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.author-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #E7E5E4; /* Light tone for generic */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #d97706;
+}
+
+.author-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.author-meta {
+    display: flex;
+    flex-direction: column;
+}
+
+.author-name {
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 6px;
+}
+
+.post-time {
+    color: #A1A1AA;
+    font-size: 13px;
+}
+
+.empty-feed {
+    text-align: center;
+    padding: 60px 0;
+    color: #A1A1AA;
+    font-family: 'Golos Text', 'Inter', sans-serif;
+}
+
+.empty-icon {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    opacity: 0.8;
+}
+
+.empty-feed p {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 8px 0;
+}
+
+.empty-subtext {
+    font-size: 14px;
+    color: #71717A;
+}
+
+.more-options-btn {
+    background: transparent;
+    border: none;
+    color: #71717A;
+    padding: 4px;
+    cursor: pointer;
+}
+
+.card-body {
+    padding: 0 16px 16px;
+}
+
+.post-title {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 6px 0;
+}
+
+.post-desc {
+    color: #A1A1AA;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Media */
+.card-media {
+    position: relative;
+    width: 100%;
+    /* No padding, flush to edges of card */
+}
+
+.card-media img {
+    width: 100%;
+    display: block;
+    object-fit: cover;
+    aspect-ratio: 1.2;
+}
+
+.status-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.transit {
+    background-color: #3B82F6;
+    color: #ffffff;
+}
+
+.status-badge.customs {
+    background-color: #F59E0B;
+    color: #ffffff;
+}
+
+.value-tag {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background-color: rgba(24, 24, 27, 0.85); /* #18181b with opacity */
+    backdrop-filter: blur(8px);
+    padding: 10px 16px;
+    border-top-left-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.value-lbl {
+    font-size: 9px;
+    font-weight: 600;
+    color: #A1A1AA;
+    letter-spacing: 1px;
+}
+
+.value-amt {
+    font-size: 18px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.padding-bottom {
+    height: 100px;
+}
 </style>
