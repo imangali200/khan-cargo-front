@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export default defineNuxtPlugin(() => {
-  const tokenCookie = useCookie("token", { maxAge: 15 * 60, path: '/' });
+  const tokenCookie = useCookie("token", { maxAge: 30 * 24 * 60 * 60, path: '/' });
   const refreshTokenCookie = useCookie("refreshToken", { maxAge: 21 * 24 * 60 * 60, path: '/' });
 
   const config = useRuntimeConfig();

@@ -11,9 +11,9 @@ export default defineNuxtConfig({
   pwa: {
     registerType: 'autoUpdate',
     manifest: {
-      name: 'CargoFlow',
-      short_name: 'CargoFlow',
-      description: 'Cargo tracking and logistics management',
+      name: 'Khan Cargo',
+      short_name: 'Khan Cargo',
+      description: 'Khan Cargo - cargo tracking and logistics management',
       theme_color: '#0d1117',
       background_color: '#0d1117',
       display: 'standalone',
@@ -23,19 +23,19 @@ export default defineNuxtConfig({
       id: '/',
       icons: [
         {
-          src: '/images/ai-market-logo-square-orig.jpg',
+          src: '/logo.jpg',
           sizes: '192x192',
           type: 'image/jpeg',
           purpose: 'any'
         },
         {
-          src: '/images/ai-market-logo-square-orig.jpg',
+          src: '/logo.jpg',
           sizes: '512x512',
           type: 'image/jpeg',
           purpose: 'any'
         },
         {
-          src: '/images/ai-market-logo-square-orig.jpg',
+          src: '/logo.jpg',
           sizes: '512x512',
           type: 'image/jpeg',
           purpose: 'maskable'
@@ -59,28 +59,28 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'CargoFlow',
+      title: 'Khan Cargo',
       meta: [
-        { name: 'description', content: 'CargoFlow - Professional cargo tracking and logistics management. Track your shipments from China to Kazakhstan in real-time.' },
-        { name: 'keywords', content: 'cargoflow, cargo, flow, tracking, logistics, china, kazakhstan, shipping, carrier' },
+        { name: 'description', content: 'Khan Cargo - Professional cargo tracking and logistics management. Track your shipments from China to Kazakhstan in real-time.' },
+        { name: 'keywords', content: 'khan cargo, cargo, tracking, logistics, china, kazakhstan, shipping, carrier' },
 
         { property: 'og:type', content: 'website' },
-        { property: 'og:url', content: 'https://cargoflow.app/' },
-        { property: 'og:title', content: 'CargoFlow - Professional Cargo Tracking' },
-        { property: 'og:description', content: 'Track your cargo with CargoFlow. Efficient delivery from China to Kazakhstan.' },
-        { property: 'og:image', content: 'https://ai-market.kz/images/ai-market-logo-square-orig.jpg' },
+        { property: 'og:url', content: 'https://khancargo.kz/' },
+        { property: 'og:title', content: 'Khan Cargo - Professional Cargo Tracking' },
+        { property: 'og:description', content: 'Track your cargo with Khan Cargo. Efficient delivery from China to Kazakhstan.' },
+        { property: 'og:image', content: 'https://khancargo.kz/logo.jpg' },
 
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:url', content: 'https://cargoflow.app/' },
-        { name: 'twitter:title', content: 'CargoFlow - Professional Cargo Tracking' },
-        { name: 'twitter:description', content: 'Track your cargo with CargoFlow.' },
+        { name: 'twitter:url', content: 'https://khancargo.kz/' },
+        { name: 'twitter:title', content: 'Khan Cargo - Professional Cargo Tracking' },
+        { name: 'twitter:description', content: 'Track your cargo with Khan Cargo.' },
         { name: 'twitter:image', content: '/logo-preview.jpg' },
         { name: 'google-site-verification', content: 'google1ccc272df3e5873a' },
 
         { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
-        { name: 'apple-mobile-web-app-title', content: 'CargoFlow' },
+        { name: 'apple-mobile-web-app-title', content: 'Khan Cargo' },
         { name: 'theme-color', content: '#0d1117' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover' },
         { name: 'format-detection', content: 'telephone=no' }
@@ -89,12 +89,12 @@ export default defineNuxtConfig({
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&display=swap' },
-        { rel: 'icon', type: 'image/jpeg', href: '/images/ai-market-logo-square-orig.jpg' },
-        { rel: 'shortcut icon', type: 'image/jpeg', href: '/images/ai-market-logo-square-orig.jpg' },
-        { rel: 'apple-touch-icon', href: '/images/ai-market-logo-square-orig.jpg' },
-        { rel: 'apple-touch-icon', sizes: '180x180', href: '/images/ai-market-logo-square-orig.jpg' },
-        { rel: 'apple-touch-icon', sizes: '167x167', href: '/images/ai-market-logo-square-orig.jpg' },
-        { rel: 'apple-touch-icon', sizes: '152x152', href: '/images/ai-market-logo-square-orig.jpg' },
+        { rel: 'icon', type: 'image/jpeg', href: '/logo.jpg' },
+        { rel: 'shortcut icon', type: 'image/jpeg', href: '/logo.jpg' },
+        { rel: 'apple-touch-icon', href: '/logo.jpg' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/logo.jpg' },
+        { rel: 'apple-touch-icon', sizes: '167x167', href: '/logo.jpg' },
+        { rel: 'apple-touch-icon', sizes: '152x152', href: '/logo.jpg' },
         { rel: 'manifest', href: '/manifest.webmanifest' }
       ],
       script: [
@@ -103,11 +103,11 @@ export default defineNuxtConfig({
           innerHTML: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Organization",
-            "name": "CargoFlow",
-            "url": "https://cargoflow.app",
-            "logo": "https://cargoflow.app/logo.png",
+            "name": "Khan Cargo",
+            "url": "https://khancargo.kz",
+            "logo": "https://khancargo.kz/logo.png",
             "sameAs": [
-              "https://ai-market.kz"
+              "https://khancargo.kz"
             ]
           })
         }

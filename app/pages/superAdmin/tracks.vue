@@ -116,7 +116,7 @@
 
 <script setup lang="ts">
 definePageMeta({
-    layout: 'superAdmin'
+    layout: 'super-admin'
 })
 
 import { useToast } from '~/composables/useToast'
@@ -166,7 +166,7 @@ const getProductStatus = (product: TrackingItem) => {
     return { text: '📝 Ожидание', date: product.createAt, class: 'gray' }
 }
 
-const formatDate = (time: string | null) => {
+const formatDate = (time: string | null | undefined) => {
     if (!time) return '—'
     return new Date(time).toLocaleString('ru-RU', {
         day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'

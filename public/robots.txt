@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ai-market.kz/sitemap.xml
+Sitemap: https://khancargo.kz/sitemap.xml

@@ -34,11 +34,30 @@ export default defineNuxtRouteMiddleware((to) => {
 
   // All other pages require a token
   if (!token) {
+    // Token жоқ, бірақ refreshToken бар болса — page load жасатамыз,
+    // Axios interceptor бірінші API call-да refresh жасайды
+    const refreshToken = useCookie("refreshToken").value;
+    if (refreshToken) {
+      return;
+    }
     return navigateTo("/auth/login");
   }
 
   try {
     const payload = jwtDecode<JwtPayload>(token);
+
+    // Token expire болған-болмағанын тексеру
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      const refreshToken = useCookie("refreshToken").value;
+      if (refreshToken) {
+        // Token expire болды, бірақ refreshToken бар — page load жасатамыз,
+        // Axios interceptor 401-де refresh жасайды
+        return;
+      }
+      // refreshToken жоқ — login-ге redirect
+      useCookie("token").value = null;
+      return navigateTo("/auth/login");
+    }
 
     if (payload.role === "admin" && !to.path.startsWith('/admin')) {
       return navigateTo("/admin");
@@ -48,7 +67,11 @@ export default defineNuxtRouteMiddleware((to) => {
       return navigateTo("/user");
     }
   } catch (e) {
-    // If token is invalid, clear it and redirect to login
+    // Token invalid болса — refreshToken бар-жоғын тексеру
+    const refreshToken = useCookie("refreshToken").value;
+    if (refreshToken) {
+      return;
+    }
     useCookie("token").value = null;
     return navigateTo("/auth/login");
   }

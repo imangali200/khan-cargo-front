@@ -18,6 +18,10 @@ export interface Branch {
     id: number;
     name: string;
     address?: string;
+    isActive: boolean;
+    adminId?: number;
+    admin?: User;
+    telegramThreadId?: number;
     createAt: string;
 }
 

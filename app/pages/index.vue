@@ -1,9 +1,10 @@
 <template>
     <div class="preview-hub">
         <header class="hub-header">
-            <div class="logo">CF</div>
-            <h1>CargoFlow Ecosystem</h1>
-            <p>The updated preview hub for the CargoFlow logistics platform. Unified interface for users, branch admins,
+            <div class="logo">KC</div>
+            <h1>Khan Cargo</h1>
+            <p>The updated preview hub for the Khan Cargo logistics platform. Unified interface for users, branch
+                admins,
                 and global moderators.</p>
         </header>
 
@@ -112,7 +113,7 @@
         </main>
 
         <div class="hub-footer">
-            <p>© 2024 CargoFlow Engineering • Hub v2.1</p>
+            <p>© 2024 Khan Cargo Engineering • Hub v2.1</p>
         </div>
     </div>
 </template>

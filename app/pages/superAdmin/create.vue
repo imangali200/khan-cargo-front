@@ -16,15 +16,14 @@ const codeUser = ref('')
 const name = ref('')
 const surname = ref('')
 const password = ref('')
+const confirmPassword = ref('')
+const telegramUsername = ref('')
+const showPassword = ref(false)
 const errorMessage = ref('')
 const role = ref('user')
 const branches = ref<Branch[]>([])
 const loading = ref(false)
 const submitting = ref(false)
-
-const goToBack = () => {
-    router.back()
-}
 
 async function getBranches() {
     loading.value = true
@@ -43,6 +42,10 @@ const createUser = async () => {
         errorMessage.value = 'Пожалуйста, заполните все обязательные поля'
         return
     }
+    if (confirmPassword.value && password.value !== confirmPassword.value) {
+        errorMessage.value = 'Пароли не совпадают'
+        return
+    }
 
     submitting.value = true
     errorMessage.value = ''
@@ -53,15 +56,16 @@ const createUser = async () => {
             userCode: codeUser.value || undefined,
             name: name.value,
             lastName: surname.value,
-            role: role.value.toUpperCase(),
+            role: role.value,
             branchId: Number(selectBranch.value) || undefined,
+            telegramUsername: telegramUsername.value || undefined,
             password: password.value
         })
 
-        toast.success('Пользователь успешно создан!', { position: "top-center", timeout: 3000 })
+        toast.success('Пользователь успешно создан!')
         return navigateTo('/superAdmin/users')
     } catch (error: any) {
-        toast.error(error.response?.data?.message || 'Ошибка при создании пользователя', { position: 'top-center' })
+        toast.error(error.response?.data?.message || 'Ошибка при создании пользователя')
     } finally {
         submitting.value = false
     }
@@ -73,215 +77,513 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="tw-py-6 animate-fadeIn">
+    <div class="create-page">
         <!-- Breadcrumb -->
-        <div class="tw-flex tw-items-center tw-gap-3 tw-mb-6 tw-flex-wrap">
-            <router-link to="/superAdmin"
-                class="tw-flex tw-items-center tw-gap-2 tw-text-cyan-400 tw-no-underline hover:tw-text-cyan-300 tw-transition-colors tw-text-sm">
-                <svg class="tw-w-4 tw-h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                Главная
-            </router-link>
-            <span class="tw-text-white/30">→</span>
-            <router-link to="/superAdmin/users"
-                class="tw-text-cyan-400 tw-no-underline hover:tw-text-cyan-300 tw-transition-colors tw-text-sm">Пользователи</router-link>
-            <span class="tw-text-white/30">→</span>
-            <span class="tw-text-white/60 tw-text-sm">Добавить</span>
+        <div class="breadcrumb">
+            <router-link to="/superAdmin/users" class="bc-link">Users</router-link>
+            <span class="bc-sep">›</span>
+            <span class="bc-current">Create New User</span>
+            <router-link to="/superAdmin/users" class="view-list-btn">View List</router-link>
         </div>
 
         <!-- Header -->
-        <div class="tw-flex tw-justify-between tw-items-center tw-mb-6 tw-pb-6 tw-border-b tw-border-white/10">
-            <h1 class="tw-text-2xl tw-font-bold tw-text-white">Добавить пользователя</h1>
-            <button @click="goToBack"
-                class="tw-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2.5 tw-bg-red-500/15 tw-border tw-border-red-500/30 tw-rounded-xl tw-text-red-400 tw-font-semibold tw-text-sm hover:tw-bg-red-500/25 tw-transition-all">
-                <svg class="tw-w-5 tw-h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Назад
-            </button>
+        <div class="page-header">
+            <h1>Create New User</h1>
+            <p>Register a new administrative user and assign permissions.</p>
         </div>
 
         <!-- Loading -->
-        <div v-if="loading" class="tw-text-center tw-py-16">
-            <div
-                class="tw-w-12 tw-h-12 tw-border-4 tw-border-cyan-500/20 tw-border-t-cyan-500 tw-rounded-full tw-animate-spin tw-mx-auto">
-            </div>
-            <p class="tw-mt-4 tw-text-white/50">Загрузка...</p>
+        <div v-if="loading" class="loading-box">
+            <div class="spinner"></div>
+            <span>Загрузка...</span>
         </div>
 
-        <!-- Form -->
-        <form v-else @submit.prevent="createUser"
-            class="tw-bg-white/[0.03] tw-backdrop-blur-xl tw-border tw-border-white/10 tw-rounded-2xl tw-p-6">
-            <div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-5">
-                <!-- Код -->
-                <div class="tw-flex tw-flex-col tw-gap-2">
-                    <label class="tw-text-sm tw-text-white/70 tw-font-medium">Код (для клиентов)</label>
-                    <div
-                        class="tw-flex tw-items-center tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-xl focus-within:tw-border-cyan-500 focus-within:tw-shadow-lg focus-within:tw-shadow-cyan-500/10 tw-transition-all">
-                        <div class="tw-px-4 tw-text-white/40">
-                            <svg class="tw-w-5 tw-h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
-                            </svg>
-                        </div>
-                        <input type="text" v-model="codeUser" placeholder="Например: KZ001"
-                            class="tw-flex-1 tw-h-[50px] tw-bg-transparent tw-border-none tw-outline-none tw-text-white placeholder:tw-text-white/30 tw-pr-4">
+        <!-- Form Card -->
+        <form v-else @submit.prevent="createUser" class="form-card">
+            <div class="card-header">
+                <h2>Account Details</h2>
+                <p>Basic information used for identification and access.</p>
+            </div>
+
+            <!-- Full Name + User Code -->
+            <div class="field-row">
+                <div class="field">
+                    <label>Full Name</label>
+                    <div class="name-inputs">
+                        <input type="text" v-model="name" placeholder="Имя" class="input" />
+                        <input type="text" v-model="surname" placeholder="Фамилия" class="input" />
                     </div>
                 </div>
-
-                <!-- Телефон -->
-                <div class="tw-flex tw-flex-col tw-gap-2">
-                    <label class="tw-text-sm tw-text-white/70 tw-font-medium">Телефон <span
-                            class="tw-text-red-400">*</span></label>
-                    <div
-                        class="tw-flex tw-items-center tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-xl focus-within:tw-border-cyan-500 focus-within:tw-shadow-lg focus-within:tw-shadow-cyan-500/10 tw-transition-all">
-                        <div class="tw-px-4 tw-text-white/40">
-                            <svg class="tw-w-5 tw-h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                            </svg>
-                        </div>
-                        <input v-model="phoneNumber" type="text" placeholder="8701 001 0101"
-                            class="tw-flex-1 tw-h-[50px] tw-bg-transparent tw-border-none tw-outline-none tw-text-white placeholder:tw-text-white/30 tw-pr-4">
-                    </div>
-                </div>
-
-                <!-- Имя -->
-                <div class="tw-flex tw-flex-col tw-gap-2">
-                    <label class="tw-text-sm tw-text-white/70 tw-font-medium">Имя <span
-                            class="tw-text-red-400">*</span></label>
-                    <div
-                        class="tw-flex tw-items-center tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-xl focus-within:tw-border-cyan-500 focus-within:tw-shadow-lg focus-within:tw-shadow-cyan-500/10 tw-transition-all">
-                        <div class="tw-px-4 tw-text-white/40">
-                            <svg class="tw-w-5 tw-h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
-                        <input type="text" v-model="name" placeholder="Ivan"
-                            class="tw-flex-1 tw-h-[50px] tw-bg-transparent tw-border-none tw-outline-none tw-text-white placeholder:tw-text-white/30 tw-pr-4">
-                    </div>
-                </div>
-
-                <!-- Фамилия -->
-                <div class="tw-flex tw-flex-col tw-gap-2">
-                    <label class="tw-text-sm tw-text-white/70 tw-font-medium">Фамилия <span
-                            class="tw-text-red-400">*</span></label>
-                    <div
-                        class="tw-flex tw-items-center tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-xl focus-within:tw-border-cyan-500 focus-within:tw-shadow-lg focus-within:tw-shadow-cyan-500/10 tw-transition-all">
-                        <div class="tw-px-4 tw-text-white/40">
-                            <svg class="tw-w-5 tw-h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
-                        <input type="text" v-model="surname" placeholder="Ivanov"
-                            class="tw-flex-1 tw-h-[50px] tw-bg-transparent tw-border-none tw-outline-none tw-text-white placeholder:tw-text-white/30 tw-pr-4">
-                    </div>
-                </div>
-
-                <!-- Роль -->
-                <div class="tw-flex tw-flex-col tw-gap-2">
-                    <label class="tw-text-sm tw-text-white/70 tw-font-medium">Роль <span
-                            class="tw-text-red-400">*</span></label>
-                    <div
-                        class="tw-relative tw-flex tw-items-center tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-xl focus-within:tw-border-cyan-500 focus-within:tw-shadow-lg focus-within:tw-shadow-cyan-500/10 tw-transition-all">
-                        <div class="tw-px-4 tw-text-white/40">
-                            <svg class="tw-w-5 tw-h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                            </svg>
-                        </div>
-                        <select v-model="role"
-                            class="tw-flex-1 tw-h-[50px] tw-bg-transparent tw-border-none tw-outline-none tw-text-white tw-appearance-none tw-cursor-pointer tw-pr-10">
-                            <option value="USER" class="tw-bg-[#1e293b] tw-text-white">Пользователь</option>
-                            <option value="ADMIN" class="tw-bg-[#1e293b] tw-text-white">Администратор</option>
-                            <option value="SUPERADMIN" class="tw-bg-[#1e293b] tw-text-white">Super Admin</option>
-                        </select>
-                        <div class="tw-absolute tw-right-4 tw-text-white/40 tw-pointer-events-none">
-                            <svg class="tw-w-4 tw-h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Склад -->
-                <div class="tw-flex tw-flex-col tw-gap-2">
-                    <label class="tw-text-sm tw-text-white/70 tw-font-medium">Склад</label>
-                    <div
-                        class="tw-relative tw-flex tw-items-center tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-xl focus-within:tw-border-cyan-500 focus-within:tw-shadow-lg focus-within:tw-shadow-cyan-500/10 tw-transition-all">
-                        <div class="tw-px-4 tw-text-white/40">
-                            <svg class="tw-w-5 tw-h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
-                        </div>
-                        <select v-model="selectBranch"
-                            class="tw-flex-1 tw-h-[50px] tw-bg-transparent tw-border-none tw-outline-none tw-text-white tw-appearance-none tw-cursor-pointer tw-pr-10">
-                            <option value="" class="tw-bg-[#1e293b] tw-text-white">Не выбран</option>
-                            <option v-for="branch in branches" :key="branch.id" :value="branch.id"
-                                class="tw-bg-[#1e293b] tw-text-white">{{ branch.name }}</option>
-                        </select>
-                        <div class="tw-absolute tw-right-4 tw-text-white/40 tw-pointer-events-none">
-                            <svg class="tw-w-4 tw-h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Пароль -->
-                <div class="tw-flex tw-flex-col tw-gap-2 sm:tw-col-span-2">
-                    <label class="tw-text-sm tw-text-white/70 tw-font-medium">Пароль <span
-                            class="tw-text-red-400">*</span></label>
-                    <div
-                        class="tw-flex tw-items-center tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-xl focus-within:tw-border-cyan-500 focus-within:tw-shadow-lg focus-within:tw-shadow-cyan-500/10 tw-transition-all">
-                        <div class="tw-px-4 tw-text-white/40">
-                            <svg class="tw-w-5 tw-h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                        </div>
-                        <input type="text" v-model="password" placeholder="Введите пароль"
-                            class="tw-flex-1 tw-h-[50px] tw-bg-transparent tw-border-none tw-outline-none tw-text-white placeholder:tw-text-white/30 tw-pr-4">
-                    </div>
+                <div class="field">
+                    <label>User Code</label>
+                    <input type="text" v-model="codeUser" placeholder="Khan-123" class="input" />
                 </div>
             </div>
 
-            <!-- Error message -->
-            <p v-if="errorMessage"
-                class="tw-mt-4 tw-px-4 tw-py-3 tw-bg-red-500/10 tw-border tw-border-red-500/30 tw-rounded-xl tw-text-red-400 tw-text-sm">
-                {{ errorMessage }}</p>
-
-            <!-- Submit -->
-            <button type="submit" :disabled="submitting"
-                class="tw-mt-6 tw-w-full sm:tw-w-auto tw-h-[52px] tw-px-8 tw-bg-gradient-to-r tw-from-cyan-500 tw-to-cyan-600 tw-rounded-xl tw-text-white tw-font-semibold hover:tw-from-cyan-600 hover:tw-to-cyan-700 hover:tw-translate-y-[-2px] hover:tw-shadow-lg hover:tw-shadow-cyan-500/30 disabled:tw-opacity-50 disabled:tw-cursor-not-allowed tw-transition-all tw-flex tw-items-center tw-justify-center tw-gap-2">
-                <span v-if="!submitting">Сохранить</span>
-                <div v-else
-                    class="tw-w-5 tw-h-5 tw-border-2 tw-border-white/30 tw-border-t-white tw-rounded-full tw-animate-spin">
+            <!-- Phone + Role -->
+            <div class="field-row">
+                <div class="field">
+                    <label>Phone Number</label>
+                    <input v-model="phoneNumber" type="text" placeholder="+7 (555) 000-0000" class="input" />
                 </div>
-            </button>
+                <div class="field">
+                    <label>User Role</label>
+                    <select v-model="role" class="select">
+                        <option value="" disabled>Select Role</option>
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                        <option value="superAdmin">Super Admin</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Password + Confirm -->
+            <div class="field-row">
+                <div class="field">
+                    <label>Password</label>
+                    <div class="password-wrap">
+                        <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="••••••••"
+                            class="input pw-input" />
+                        <button type="button" class="eye-btn" @click="showPassword = !showPassword">
+                            <svg v-if="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path
+                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                                </path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Confirm Password</label>
+                    <input type="password" v-model="confirmPassword" placeholder="••••••••" class="input" />
+                </div>
+            </div>
+
+            <!-- Склад + Telegram -->
+            <div class="field-row">
+                <div class="field">
+                    <label>Склад</label>
+                    <select v-model="selectBranch" class="select">
+                        <option value="">Не выбран</option>
+                        <option v-for="branch in branches" :key="branch.id" :value="branch.id">
+                            {{ branch.name }}
+                        </option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Telegram Name</label>
+                    <input type="text" v-model="telegramUsername" placeholder="@username" class="input" />
+                </div>
+            </div>
+
+            <!-- Error -->
+            <p v-if="errorMessage" class="error-msg">{{ errorMessage }}</p>
+
+            <!-- Actions -->
+            <div class="actions">
+                <button type="button" class="btn-cancel" @click="router.back()">Cancel</button>
+                <button type="submit" :disabled="submitting" class="btn-create">
+                    <svg v-if="!submitting" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        class="btn-icon">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                    <span v-if="!submitting">Create User</span>
+                    <div v-else class="btn-spin"></div>
+                </button>
+            </div>
         </form>
+
+        <!-- System Notification -->
+        <div class="system-note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="note-icon">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <div>
+                <strong>System Notification</strong>
+                <p>Пользователь будет создан с указанными данными и сможет войти в систему используя номер телефона и
+                    пароль.</p>
+            </div>
+        </div>
     </div>
 </template>
 
 <style scoped>
-.animate-fadeIn {
-    animation: fadeIn 0.5s ease-out;
+.create-page {
+    padding: 24px 40px 40px;
+    max-width: 960px;
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: #e4e4e7;
+    animation: slideUp 0.4s ease;
 }
 
-@keyframes fadeIn {
+@keyframes slideUp {
     from {
         opacity: 0;
+        transform: translateY(12px);
     }
 
     to {
         opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Breadcrumb */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+.bc-link {
+    color: #71717a;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.bc-link:hover {
+    color: #a1a1aa;
+}
+
+.bc-sep {
+    color: #3f3f46;
+}
+
+.bc-current {
+    color: #a1a1aa;
+}
+
+.view-list-btn {
+    margin-left: auto;
+    padding: 8px 16px;
+    background-color: #27272a;
+    border: 1px solid #3f3f46;
+    border-radius: 8px;
+    color: #d4d4d8;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.view-list-btn:hover {
+    background-color: #3f3f46;
+}
+
+/* Header */
+.page-header {
+    margin-bottom: 28px;
+}
+
+.page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 8px;
+}
+
+.page-header p {
+    font-size: 14px;
+    color: #71717a;
+    margin: 0;
+}
+
+/* Loading */
+.loading-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px;
+    color: #71717a;
+    gap: 12px;
+}
+
+.spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid #27272a;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Form Card */
+.form-card {
+    border: 1px dashed #334155;
+    border-radius: 16px;
+    padding: 32px 36px;
+    background-color: transparent;
+}
+
+.card-header {
+    margin-bottom: 28px;
+}
+
+.card-header h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 6px;
+}
+
+.card-header p {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+}
+
+/* Fields */
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.field label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #d4d4d8;
+}
+
+.field-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.half-field {
+    max-width: calc(50% - 10px);
+    margin-bottom: 24px;
+}
+
+.name-inputs {
+    display: flex;
+    gap: 10px;
+}
+
+.name-inputs .input {
+    flex: 1;
+}
+
+.input,
+.select {
+    width: 100%;
+    height: 48px;
+    padding: 0 16px;
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    color: #e2e8f0;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.input:focus,
+.select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.input::placeholder {
+    color: #64748b;
+}
+
+.select {
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+}
+
+.select option {
+    background-color: #1e293b;
+    color: #e2e8f0;
+}
+
+/* Password */
+.password-wrap {
+    position: relative;
+}
+
+.pw-input {
+    padding-right: 48px;
+}
+
+.eye-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.2s;
+}
+
+.eye-btn:hover {
+    color: #94a3b8;
+}
+
+.eye-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Error */
+.error-msg {
+    padding: 12px 16px;
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 10px;
+    color: #ef4444;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 16px;
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid #27272a;
+}
+
+.btn-cancel {
+    background: none;
+    border: none;
+    color: #a1a1aa;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 10px 20px;
+    transition: color 0.2s;
+}
+
+.btn-cancel:hover {
+    color: #e4e4e7;
+}
+
+.btn-create {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-create:hover {
+    background-color: #2563eb;
+}
+
+.btn-create:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.btn-spin {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+/* System Note */
+.system-note {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-top: 24px;
+    padding: 18px 20px;
+    background-color: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 12px;
+}
+
+.note-icon {
+    width: 20px;
+    height: 20px;
+    color: #3b82f6;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.system-note strong {
+    font-size: 13px;
+    color: #93c5fd;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.system-note p {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+    .create-page {
+        padding: 20px 16px;
+    }
+
+    .form-card {
+        padding: 24px 20px;
+    }
+
+    .field-row {
+        flex-direction: column;
+    }
+
+    .half-field {
+        max-width: 100%;
+    }
+
+    .name-inputs {
+        flex-direction: column;
     }
 }
 </style>

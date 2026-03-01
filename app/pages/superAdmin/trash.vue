@@ -100,7 +100,7 @@
 
 <script setup lang="ts">
 definePageMeta({
-    layout: 'superAdmin'
+    layout: 'super-admin'
 })
 
 import { useToast } from '~/composables/useToast'
@@ -128,84 +128,384 @@ const restoreUserLocal = (id: number) => {
 </script>
 
 <style scoped>
-.user-archive { padding: 20px; max-width: 1000px; margin: 0 auto; color: #fff; }
-.animate-slide-up { animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
+.user-archive {
+    padding: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+    color: #fff;
+}
+
+.animate-slide-up {
+    animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
 
 @keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.page-header { margin-bottom: 24px; }
-.breadcrumb { display: flex; gap: 8px; font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
-.breadcrumb a { color: #e74c3c; text-decoration: none; font-weight: 600; }
-.title-section h1 { font-size: 28px; font-weight: 900; margin: 0; letter-spacing: -1px; }
-.subtitle { color: rgba(255,255,255,0.5); font-size: 14px; margin-top: 4px; }
+.page-header {
+    margin-bottom: 24px;
+}
 
-.glass-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
-.glass-card.border-red { border-color: rgba(231, 76, 60, 0.2); }
+.breadcrumb {
+    display: flex;
+    gap: 8px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 8px;
+}
 
-.stats-bar { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
-.stat-info { display: flex; flex-direction: column; gap: 4px; }
-.count-badge.red { background: rgba(231, 76, 60, 0.1); color: #e74c3c; padding: 4px 12px; border-radius: 10px; font-size: 12px; font-weight: 800; border: 1px solid rgba(231, 76, 60, 0.2); width: fit-content; }
-.info-text { font-size: 12px; color: rgba(255,255,255,0.4); margin: 0; }
-.back-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-.back-btn:hover { background: rgba(255,255,255,0.1); transform: translateX(-4px); }
+.breadcrumb a {
+    color: #e74c3c;
+    text-decoration: none;
+    font-weight: 600;
+}
 
-.archive-table { width: 100%; border-collapse: collapse; }
-.archive-table th { text-align: left; padding: 16px 20px; background: rgba(255,255,255,0.02); font-size: 11px; color: rgba(255,255,255,0.3); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-.archive-table td { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.title-section h1 {
+    font-size: 28px;
+    font-weight: 900;
+    margin: 0;
+    letter-spacing: -1px;
+}
 
-.id-td { font-size: 12px; color: rgba(255,255,255,0.3); font-weight: 700; }
-.code-td { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #fff; opacity: 0.8; }
+.subtitle {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    margin-top: 4px;
+}
 
-.user-info { display: flex; gap: 14px; align-items: center; }
-.avatar { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #e74c3c, #c0392b); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #fff; }
-.names { display: flex; flex-direction: column; }
-.full { font-weight: 700; font-size: 14px; }
-.phone { font-size: 12px; color: rgba(255,255,255,0.4); }
+.glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+}
 
-.role-badge { padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 900; text-transform: uppercase; }
-.role-badge.superAdmin { background: rgba(241, 196, 15, 0.1); color: #f1c40f; }
-.role-badge.admin { background: rgba(155, 89, 182, 0.1); color: #9b59b6; }
-.role-badge.user { background: rgba(52, 152, 219, 0.1); color: #3498db; }
+.glass-card.border-red {
+    border-color: rgba(231, 76, 60, 0.2);
+}
 
-.date-td { font-size: 12px; color: rgba(255,255,255,0.5); }
+.stats-bar {
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
 
-.restore-btn { background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.2); color: #2ecc71; padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s; }
-.restore-btn:hover { background: #2ecc71; color: #fff; font-weight: 900; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3); }
+.stat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
 
-.empty-state { padding: 64px; text-align: center; }
-.empty-icon { font-size: 48px; margin-bottom: 20px; opacity: 0.3; }
-.empty-state h3 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
-.empty-state p { opacity: 0.4; margin-bottom: 24px; }
-.back-link { color: #e74c3c; text-decoration: none; font-weight: 700; }
+.count-badge.red {
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+    padding: 4px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 800;
+    border: 1px solid rgba(231, 76, 60, 0.2);
+    width: fit-content;
+}
 
-.mobile-only { display: none; }
+.info-text {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0;
+}
+
+.back-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(-4px);
+}
+
+.archive-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.archive-table th {
+    text-align: left;
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.02);
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.3);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.archive-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.id-td {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.3);
+    font-weight: 700;
+}
+
+.code-td {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #fff;
+    opacity: 0.8;
+}
+
+.user-info {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    color: #fff;
+}
+
+.names {
+    display: flex;
+    flex-direction: column;
+}
+
+.full {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.phone {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.role-badge {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.role-badge.superAdmin {
+    background: rgba(241, 196, 15, 0.1);
+    color: #f1c40f;
+}
+
+.role-badge.admin {
+    background: rgba(155, 89, 182, 0.1);
+    color: #9b59b6;
+}
+
+.role-badge.user {
+    background: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+}
+
+.date-td {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.restore-btn {
+    background: rgba(46, 204, 113, 0.1);
+    border: 1px solid rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.restore-btn:hover {
+    background: #2ecc71;
+    color: #fff;
+    font-weight: 900;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+}
+
+.empty-state {
+    padding: 64px;
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    opacity: 0.3;
+}
+
+.empty-state h3 {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    opacity: 0.4;
+    margin-bottom: 24px;
+}
+
+.back-link {
+    color: #e74c3c;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.mobile-only {
+    display: none;
+}
+
 @media (max-width: 850px) {
-    .desktop-only { display: none; }
-    .mobile-only { display: block; }
+    .desktop-only {
+        display: none;
+    }
+
+    .mobile-only {
+        display: block;
+    }
 }
 
-.mobile-cards { display: grid; gap: 16px; }
-.archive-card { padding: 20px; border-color: rgba(231, 76, 60, 0.15); }
-.card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.id-tag { font-size: 11px; font-weight: 800; opacity: 0.3; }
-.badge { padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 900; text-transform: uppercase; }
-.badge.superAdmin { background: #f1c40f22; color: #f1c40f; }
-.badge.admin { background: #9b59b622; color: #9b59b6; }
-.badge.user { background: #3498db22; color: #3498db; }
+.mobile-cards {
+    display: grid;
+    gap: 16px;
+}
 
-.user-box { display: flex; gap: 14px; align-items: center; margin-bottom: 20px; }
-.avatar-m { width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, #e74c3c, #c0392b); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: #fff; }
-.names h3 { font-size: 16px; font-weight: 800; margin: 0; }
-.names p { font-size: 12px; color: rgba(255,255,255,0.4); margin: 2px 0 0; }
+.archive-card {
+    padding: 20px;
+    border-color: rgba(231, 76, 60, 0.15);
+}
 
-.del-info { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 20px; }
-.del-info span { opacity: 0.4; }
-.del-info strong { color: #e74c3c; }
+.card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
 
-.m-restore-btn { width: 100%; padding: 12px; border-radius: 12px; border: none; background: #2ecc71; color: #fff; font-weight: 800; font-size: 14px; cursor: pointer; }
+.id-tag {
+    font-size: 11px;
+    font-weight: 800;
+    opacity: 0.3;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.badge.superAdmin {
+    background: #f1c40f22;
+    color: #f1c40f;
+}
+
+.badge.admin {
+    background: #9b59b622;
+    color: #9b59b6;
+}
+
+.badge.user {
+    background: #3498db22;
+    color: #3498db;
+}
+
+.user-box {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.avatar-m {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+}
+
+.names h3 {
+    font-size: 16px;
+    font-weight: 800;
+    margin: 0;
+}
+
+.names p {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 2px 0 0;
+}
+
+.del-info {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 12px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    margin-bottom: 20px;
+}
+
+.del-info span {
+    opacity: 0.4;
+}
+
+.del-info strong {
+    color: #e74c3c;
+}
+
+.m-restore-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    background: #2ecc71;
+    color: #fff;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+}
 </style>
 
 <style scoped>
@@ -214,7 +514,12 @@ const restoreUserLocal = (id: number) => {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 </style>

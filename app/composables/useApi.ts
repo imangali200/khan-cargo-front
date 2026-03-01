@@ -19,6 +19,7 @@ export const useApi = () => {
         },
         branches: {
             findAll: () => $axios.get<Branch[]>('/branches'),
+            findOne: (id: number) => $axios.get<Branch>(`/branches/id/${id}`),
             create: (data: any) => $axios.post<Branch>('/branches', data),
             update: (id: number, data: any) => $axios.patch<Branch>(`/branches/${id}`, data),
             remove: (id: number) => $axios.delete(`/branches/${id}`),
@@ -56,7 +57,7 @@ export const useApi = () => {
             getUser: (id: number) => $axios.get<User>(`/admin/users/${id}`),
             createUser: (data: any) => $axios.post<User>('/admin/users', data),
             updateUser: (id: number, data: any) => $axios.patch<User>(`/admin/users/${id}`, data),
-            resetPassword: (id: number, data: any) => $axios.patch(`/admin/users/${id}/password`, data),
+            resetPassword: (id: number, data: any) => $axios.patch(`/admin/users/${id}/reset-password`, data),
             toggleStatus: (id: number) => $axios.post(`/admin/users/${id}/toggle-status`),
             deleteUser: (id: number) => $axios.delete(`/admin/users/${id}`),
             getSettings: () => $axios.get('/admin/settings'),

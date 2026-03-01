@@ -3,15 +3,9 @@
         <div class="auth-card">
             <header class="auth-header">
                 <div class="logo-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round" class="truck-icon">
-                        <rect x="1" y="3" width="15" height="13"></rect>
-                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                        <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                        <circle cx="18.5" cy="18.5" r="2.5"></circle>
-                    </svg>
+                    <img src="/logo.jpg" alt="Khan Cargo" class="logo-img" />
                 </div>
-                <h1 class="brand-title">CargoFlow</h1>
+                <h1 class="brand-title">Khan Cargo</h1>
             </header>
 
             <main class="auth-body">
@@ -172,18 +166,15 @@ onMounted(() => {
 .logo-box {
     width: 56px;
     height: 56px;
-    background-color: #2563eb;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border-radius: 50%;
+    overflow: hidden;
     margin: 0 auto 16px;
 }
 
-.truck-icon {
-    width: 32px;
-    height: 32px;
-    color: white;
+.logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .brand-title {

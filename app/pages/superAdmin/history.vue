@@ -1,204 +1,111 @@
 <template>
-  <div class="tw-py-6 animate-fadeIn">
+  <div class="history-page">
     <!-- Header -->
-    <div class="tw-mb-6">
-      <div class="tw-flex tw-items-center tw-gap-2 tw-text-sm tw-mb-4">
-        <router-link class="tw-text-cyan-400 hover:tw-text-cyan-300 tw-transition-colors"
-          to="/superAdmin">Главная</router-link>
-        <span class="tw-text-white/60">→</span>
-        <span class="tw-text-white/60">Импортированные треки</span>
+    <div class="page-top">
+      <div class="page-title-area">
+        <h1>Список треков <span class="record-badge">{{ filteredProducts.length }} записей</span></h1>
       </div>
-      <h1 class="tw-text-2xl tw-font-bold tw-text-white tw-mb-2">Импортированные треки</h1>
-      <p class="tw-text-white/60">Все импортированные треки и их статусы</p>
+      <router-link to="/superAdmin/create-track" class="add-track-btn" v-if="false">
+        <span>+</span> Добавить трек
+      </router-link>
     </div>
 
-    <!-- Filters -->
-    <div class="tw-bg-white/[0.03] tw-backdrop-blur-xl tw-border tw-border-white/10 tw-rounded-2xl tw-p-4 tw-mb-6">
-      <div class="tw-flex tw-flex-col sm:tw-flex-row tw-gap-4 tw-items-start sm:tw-items-center tw-justify-between">
-        <!-- Tab Filters -->
-        <div class="tw-flex tw-flex-wrap tw-gap-2">
-          <button v-for="tab in tabs" :key="tab.value" @click="activeTab = tab.value" :class="[
-            'tw-px-4 tw-py-2 tw-rounded-xl tw-text-sm tw-font-medium tw-transition-all',
-            activeTab === tab.value
-              ? 'tw-bg-cyan-500 tw-text-white tw-shadow-lg tw-shadow-cyan-500/30'
-              : 'tw-bg-white/5 tw-text-white/60 hover:tw-bg-white/10'
-          ]">
-            {{ tab.label }}
-          </button>
-        </div>
-
-        <!-- Search -->
-        <div class="tw-flex tw-items-center tw-gap-2">
-          <input type="text" v-model="searchQuery" placeholder="Поиск по трек-коду, имя, телефон, код..."
-            class="tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-xl tw-px-3 tw-py-2 tw-text-white tw-text-sm tw-outline-none focus:tw-border-cyan-500/50 placeholder:tw-text-white/60">
-        </div>
+    <!-- Filters Row -->
+    <div class="filters-row">
+      <div class="tab-filters">
+        <button v-for="tab in tabs" :key="tab.value" @click="activeTab = tab.value"
+          :class="['tab-btn', { active: activeTab === tab.value }]">
+          {{ tab.label }}
+        </button>
       </div>
-    </div>
-
-    <!-- Stats Cards -->
-    <div class="tw-grid tw-grid-cols-2 sm:tw-grid-cols-4 tw-gap-4 tw-mb-6">
-      <div
-        class="tw-bg-white/[0.03] tw-backdrop-blur-xl tw-border tw-border-white/10 tw-rounded-xl tw-p-4 tw-text-center">
-        <p class="tw-text-2xl tw-font-bold tw-text-white">{{ stats.total }}</p>
-        <p class="tw-text-white/60 tw-text-sm">Все</p>
-      </div>
-      <div class="tw-bg-amber-500/10 tw-border tw-border-amber-500/20 tw-rounded-xl tw-p-4 tw-text-center">
-        <p class="tw-text-2xl tw-font-bold tw-text-amber-400">{{ stats.inChina }}</p>
-        <p class="tw-text-amber-400/70 tw-text-sm">🇨🇳 В Китае</p>
-      </div>
-      <div class="tw-bg-cyan-500/10 tw-border tw-border-cyan-500/20 tw-rounded-xl tw-p-4 tw-text-center">
-        <p class="tw-text-2xl tw-font-bold tw-text-cyan-400">{{ stats.atWarehouse }}</p>
-        <p class="tw-text-cyan-400/70 tw-text-sm">📦 На складе</p>
-      </div>
-      <div class="tw-bg-emerald-500/10 tw-border tw-border-emerald-500/20 tw-rounded-xl tw-p-4 tw-text-center">
-        <p class="tw-text-2xl tw-font-bold tw-text-emerald-400">{{ stats.completed }}</p>
-        <p class="tw-text-emerald-400/70 tw-text-sm">✅ Выдано</p>
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" v-model="searchQuery" placeholder="Поиск по трек-коду или клиенту..." />
       </div>
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="tw-text-center tw-py-16">
-      <div
-        class="tw-w-12 tw-h-12 tw-border-4 tw-border-cyan-500/20 tw-border-t-cyan-500 tw-rounded-full tw-animate-spin tw-mx-auto">
-      </div>
-      <p class="tw-mt-4 tw-text-white/60">Загрузка...</p>
+    <div v-if="loading" class="loading-container">
+      <div class="spinner"></div>
+      <p>Загрузка...</p>
     </div>
 
-    <!-- History List -->
-    <div v-else
-      class="tw-bg-white/[0.03] tw-backdrop-blur-xl tw-border tw-border-white/10 tw-rounded-2xl tw-overflow-hidden">
-      <div class="tw-px-5 tw-py-4 tw-border-b tw-border-white/10 tw-flex tw-items-center tw-justify-between">
-        <h2 class="tw-text-lg tw-font-semibold tw-text-white">Список треков</h2>
-        <span class="tw-text-white/60 tw-text-sm">{{ filteredProducts.length }} записей</span>
-      </div>
-
-      <!-- Table Header -->
-      <div
-        class="tw-hidden lg:tw-grid tw-grid-cols-12 tw-gap-4 tw-px-5 tw-py-3 tw-bg-white/[0.02] tw-border-b tw-border-white/10">
-        <span class="tw-col-span-2 tw-text-white/60 tw-text-sm tw-font-medium">Трек-код</span>
-        <span class="tw-col-span-3 tw-text-white/60 tw-text-sm tw-font-medium">Клиент</span>
-        <span class="tw-col-span-2 tw-text-white/60 tw-text-sm tw-font-medium">Статус</span>
-        <span class="tw-col-span-2 tw-text-white/60 tw-text-sm tw-font-medium">🇨🇳 В Китае</span>
-        <span class="tw-col-span-2 tw-text-white/60 tw-text-sm tw-font-medium">📦 На складе</span>
-        <span class="tw-col-span-1 tw-text-white/60 tw-text-sm tw-font-medium">✅ Выдан</span>
-      </div>
-
-      <!-- Table Body -->
-      <div class="tw-divide-y tw-divide-white/5">
-        <div v-for="item in paginatedProducts" :key="item.id"
-          class="tw-px-5 tw-py-4 hover:tw-bg-white/[0.02] tw-transition-colors">
-          <div class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-12 tw-gap-2 lg:tw-gap-4 tw-items-center">
-            <!-- Track Code -->
-            <div class="tw-col-span-2">
-              <span class="tw-text-white/60 tw-text-xs lg:tw-hidden">Трек-код: </span>
-              <span class="tw-text-white tw-font-mono tw-font-medium tw-text-sm">{{ item.productId }}</span>
-            </div>
-
-            <!-- Client Info -->
-            <div class="tw-col-span-3">
-              <span class="tw-text-white/60 tw-text-xs lg:tw-hidden">Клиент: </span>
-              <div v-if="item.user" class="tw-flex tw-flex-col">
-                <span class="tw-text-white tw-text-sm tw-font-medium">{{ item.user.name }} {{ item.user.surname
-                  }}</span>
-                <div class="tw-flex tw-items-center tw-gap-2 tw-text-xs tw-text-white/50">
-                  <span>📱 {{ item.user.phoneNumber }}</span>
-                  <span class="tw-px-1.5 tw-py-0.5 tw-bg-purple-500/20 tw-text-purple-400 tw-rounded">{{ item.user.code
-                    }}</span>
+    <!-- Table -->
+    <div v-else class="table-container">
+      <div class="table-wrapper">
+        <table class="tracks-table">
+          <thead>
+            <tr>
+              <th>ТРЕК-КОД</th>
+              <th>КЛИЕНТ</th>
+              <th>СТАТУС</th>
+              <th>В КИТАЕ</th>
+              <th>НА СКЛАДЕ</th>
+              <th>ВЫДАН</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in paginatedProducts" :key="item.id" class="table-row">
+              <td>
+                <div class="track-code-cell">
+                  <span class="track-code">{{ item.productId }}</span>
+                  <button class="copy-btn" @click="copyTrackCode(item.productId)" title="Копировать">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  </button>
                 </div>
-              </div>
-              <span v-else class="tw-text-white/40 tw-text-sm tw-italic">Не привязан</span>
-            </div>
+              </td>
+              <td>
+                <div v-if="item.user" class="client-cell">
+                  <div class="client-avatar">{{ getInitials(item.user) }}</div>
+                  <span class="client-name">{{ item.user.name }} {{ item.user.surname }}</span>
+                </div>
+                <span v-else class="no-client">Не привязан</span>
+              </td>
+              <td>
+                <span class="status-pill" :class="getStatusClass(item)">
+                  <span class="status-dot-icon" :class="getStatusClass(item)"></span>
+                  {{ getStatusLabel(item) }}
+                </span>
+              </td>
+              <td class="date-cell">{{ formatDate(item.china_warehouse) }}</td>
+              <td class="date-cell">{{ formatDate(item.aicargo) }}</td>
+              <td class="date-cell">{{ formatDate(item.given_to_client) }}</td>
+            </tr>
 
-            <!-- Status -->
-            <div class="tw-col-span-2">
-              <span :class="[
-                'tw-px-2.5 tw-py-1 tw-rounded-lg tw-text-xs tw-font-medium',
-                getStatusStyle(item)
-              ]">
-                {{ getStatusLabel(item) }}
-              </span>
-            </div>
-
-            <!-- China Date -->
-            <div class="tw-col-span-2">
-              <span class="tw-text-white/60 tw-text-xs lg:tw-hidden">🇨🇳 В Китае: </span>
-              <span class="tw-text-amber-400/80 tw-text-sm">{{ formatDate(item.china_warehouse) }}</span>
-            </div>
-
-            <!-- Warehouse Date -->
-            <div class="tw-col-span-2">
-              <span class="tw-text-white/60 tw-text-xs lg:tw-hidden">📦 На складе: </span>
-              <span class="tw-text-cyan-400/80 tw-text-sm">{{ formatDate(item.aicargo) }}</span>
-            </div>
-
-            <!-- Given Date -->
-            <div class="tw-col-span-1">
-              <span class="tw-text-white/60 tw-text-xs lg:tw-hidden">✅ Выдан: </span>
-              <span class="tw-text-emerald-400/80 tw-text-sm">{{ formatDate(item.given_to_client) }}</span>
-            </div>
-          </div>
-
-          <!-- Timeline (mobile) -->
-          <div class="tw-mt-3 tw-flex tw-flex-wrap tw-gap-2 lg:tw-hidden">
-            <span v-if="item.china_warehouse"
-              class="tw-px-2 tw-py-0.5 tw-bg-amber-500/20 tw-text-amber-400 tw-text-xs tw-rounded">🇨🇳 В Китае</span>
-            <span v-if="item.aicargo"
-              class="tw-px-2 tw-py-0.5 tw-bg-cyan-500/20 tw-text-cyan-400 tw-text-xs tw-rounded">📦 На складе</span>
-            <span v-if="item.given_to_client"
-              class="tw-px-2 tw-py-0.5 tw-bg-emerald-500/20 tw-text-emerald-400 tw-text-xs tw-rounded">✅ Выдано</span>
-            <span v-if="item.user"
-              class="tw-px-2 tw-py-0.5 tw-bg-purple-500/20 tw-text-purple-400 tw-text-xs tw-rounded">👤 {{
-                item.user.code }}</span>
-          </div>
-        </div>
-
-        <!-- Empty State -->
-        <div v-if="paginatedProducts.length === 0" class="tw-px-5 tw-py-16 tw-text-center">
-          <div
-            class="tw-w-16 tw-h-16 tw-rounded-2xl tw-bg-white/5 tw-flex tw-items-center tw-justify-center tw-mx-auto tw-mb-4">
-            <svg class="tw-w-8 tw-h-8 tw-text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-          </div>
-          <p class="tw-text-white/60">Треки не найдены</p>
-        </div>
+            <!-- Empty -->
+            <tr v-if="paginatedProducts.length === 0">
+              <td colspan="6" class="empty-state">
+                <p>Треки не найдены</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <!-- Pagination -->
-      <div v-if="totalPages > 1"
-        class="tw-px-5 tw-py-4 tw-border-t tw-border-white/10 tw-flex tw-items-center tw-justify-between">
-        <div class="tw-text-white/60 tw-text-sm">
-          Страница {{ currentPage }} из {{ totalPages }} ({{ filteredProducts.length }} записей)
-        </div>
-        <div class="tw-flex tw-items-center tw-gap-2">
-          <button @click="currentPage--" :disabled="currentPage === 1" :class="[
-            'tw-px-3 tw-py-2 tw-rounded-lg tw-text-sm tw-font-medium tw-transition-all',
-            currentPage === 1
-              ? 'tw-bg-white/5 tw-text-white/30 tw-cursor-not-allowed'
-              : 'tw-bg-white/10 tw-text-white hover:tw-bg-white/20'
-          ]">
-            ← Назад
+      <!-- Footer -->
+      <div class="table-footer">
+        <span class="showing-text">Показано <strong>{{ getShowingRange() }}</strong> из
+          <strong>{{ filteredProducts.length }}</strong></span>
+        <div v-if="totalPages > 1" class="pagination">
+          <button @click="currentPage--" :disabled="currentPage === 1" class="page-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
           </button>
-
-          <div class="tw-flex tw-items-center tw-gap-1">
-            <button v-for="page in visiblePages" :key="page" @click="currentPage = page" :class="[
-              'tw-w-10 tw-h-10 tw-rounded-lg tw-text-sm tw-font-medium tw-transition-all',
-              currentPage === page
-                ? 'tw-bg-cyan-500 tw-text-white tw-shadow-lg tw-shadow-cyan-500/30'
-                : 'tw-bg-white/5 tw-text-white/60 hover:tw-bg-white/10'
-            ]">
-              {{ page }}
-            </button>
+          <div class="page-numbers">
+            <button v-for="p in visiblePages" :key="p" @click="currentPage = p"
+              :class="['num-btn', { active: currentPage === p }]">{{ p }}</button>
           </div>
-
-          <button @click="currentPage++" :disabled="currentPage === totalPages" :class="[
-            'tw-px-3 tw-py-2 tw-rounded-lg tw-text-sm tw-font-medium tw-transition-all',
-            currentPage === totalPages
-              ? 'tw-bg-white/5 tw-text-white/30 tw-cursor-not-allowed'
-              : 'tw-bg-white/10 tw-text-white hover:tw-bg-white/20'
-          ]">
-            Вперед →
+          <button @click="currentPage++" :disabled="currentPage === totalPages" class="page-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
           </button>
         </div>
       </div>
@@ -226,9 +133,9 @@ const perPage = 20
 
 const tabs = [
   { label: 'Все', value: 'all' },
-  { label: '🇨🇳 В Китае', value: 'china' },
-  { label: '📦 На складе', value: 'warehouse' },
-  { label: '✅ Выдано', value: 'completed' }
+  { label: 'В пути', value: 'china' },
+  { label: 'На складе', value: 'warehouse' },
+  { label: 'Выдано', value: 'completed' }
 ]
 
 interface User {
@@ -253,17 +160,9 @@ interface Product {
 
 const products = ref<Product[]>([])
 
-const stats = computed(() => ({
-  total: products.value.length,
-  inChina: products.value.filter(p => p.china_warehouse && !p.aicargo && !p.given_to_client).length,
-  atWarehouse: products.value.filter(p => p.aicargo && !p.given_to_client).length,
-  completed: products.value.filter(p => p.given_to_client).length
-}))
-
 const filteredProducts = computed(() => {
   let result = products.value
 
-  // Filter by tab
   if (activeTab.value === 'china') {
     result = result.filter(p => p.china_warehouse && !p.aicargo && !p.given_to_client)
   } else if (activeTab.value === 'warehouse') {
@@ -272,7 +171,6 @@ const filteredProducts = computed(() => {
     result = result.filter(p => p.given_to_client)
   }
 
-  // Filter by search
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     result = result.filter(p =>
@@ -286,13 +184,11 @@ const filteredProducts = computed(() => {
   return result
 })
 
-// Pagination
-const totalPages = computed(() => Math.ceil(filteredProducts.value.length / perPage))
+const totalPages = computed(() => Math.ceil(filteredProducts.value.length / perPage) || 1)
 
 const paginatedProducts = computed(() => {
   const start = (currentPage.value - 1) * perPage
-  const end = start + perPage
-  return filteredProducts.value.slice(start, end)
+  return filteredProducts.value.slice(start, start + perPage)
 })
 
 const visiblePages = computed(() => {
@@ -300,87 +196,508 @@ const visiblePages = computed(() => {
   const maxVisible = 5
   let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2))
   let end = Math.min(totalPages.value, start + maxVisible - 1)
-
-  if (end - start + 1 < maxVisible) {
-    start = Math.max(1, end - maxVisible + 1)
-  }
-
-  for (let i = start; i <= end; i++) {
-    pages.push(i)
-  }
+  if (end - start + 1 < maxVisible) start = Math.max(1, end - maxVisible + 1)
+  for (let i = start; i <= end; i++) pages.push(i)
   return pages
 })
 
-// Reset page when filters change
-watch([activeTab, searchQuery], () => {
-  currentPage.value = 1
-})
+watch([activeTab, searchQuery], () => { currentPage.value = 1 })
 
 const getStatusLabel = (item: Product) => {
-  if (item.given_to_client) return '✅ Выдано'
-  if (item.aicargo) return '📦 На складе'
-  if (item.china_warehouse) return '🇨🇳 В Китае'
-  return '⏳ Ожидание'
+  if (item.given_to_client) return 'Выдан'
+  if (item.aicargo) return 'На складе'
+  if (item.china_warehouse) return 'В пути'
+  return 'Ожидание'
 }
 
-const getStatusStyle = (item: Product) => {
-  if (item.given_to_client) return 'tw-bg-emerald-500/20 tw-text-emerald-400'
-  if (item.aicargo) return 'tw-bg-cyan-500/20 tw-text-cyan-400'
-  if (item.china_warehouse) return 'tw-bg-amber-500/20 tw-text-amber-400'
-  return 'tw-bg-gray-500/20 tw-text-gray-400'
+const getStatusClass = (item: Product) => {
+  if (item.given_to_client) return 'st-completed'
+  if (item.aicargo) return 'st-warehouse'
+  if (item.china_warehouse) return 'st-transit'
+  return 'st-pending'
+}
+
+const getInitials = (user: User) => {
+  const first = user.name?.charAt(0)?.toUpperCase() || ''
+  const last = user.surname?.charAt(0)?.toUpperCase() || ''
+  return first + last
+}
+
+const copyTrackCode = (code: string) => {
+  navigator.clipboard.writeText(code)
+  toast.success('Трек-код скопирован')
 }
 
 const formatDate = (dateStr: string | null) => {
   if (!dateStr) return '—'
   const date = new Date(dateStr)
-  return date.toLocaleString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+const getShowingRange = () => {
+  if (filteredProducts.value.length === 0) return '0-0'
+  const start = (currentPage.value - 1) * perPage + 1
+  const end = Math.min(currentPage.value * perPage, filteredProducts.value.length)
+  return `${start}-${end}`
 }
 
 const fetchProducts = async () => {
   loading.value = true
-
   try {
     const res = await $axios.get('admin/imported-tracks', {
-      headers: {
-        Authorization: `Bearer ${token.value}`
-      }
+      headers: { Authorization: `Bearer ${token.value}` }
     })
-
     products.value = res.data || []
-
   } catch (err: any) {
-    console.error('Products fetch error:', err)
-    toast.error('Ошибка при загрузке треков', { position: 'top-center' })
+    toast.error('Ошибка при загрузке треков')
   } finally {
     loading.value = false
   }
 }
 
-onMounted(() => {
-  fetchProducts()
-})
+onMounted(() => { fetchProducts() })
 </script>
 
 <style scoped>
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease-out;
+.history-page {
+  padding: 24px 32px;
+  font-family: 'Inter', -apple-system, sans-serif;
+  color: #e4e4e7;
+  animation: slideUp 0.4s ease;
 }
 
-@keyframes fadeIn {
+@keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px);
   }
 
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Header */
+.page-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.page-title-area h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.record-badge {
+  font-size: 12px;
+  font-weight: 500;
+  color: #a1a1aa;
+  background-color: #27272a;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.add-track-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.add-track-btn:hover {
+  background-color: #2563eb;
+}
+
+/* Filters */
+.filters-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.tab-filters {
+  display: flex;
+  gap: 4px;
+}
+
+.tab-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: transparent;
+  color: #71717a;
+}
+
+.tab-btn:hover {
+  background-color: #27272a;
+  color: #e4e4e7;
+}
+
+.tab-btn.active {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.search-box {
+  position: relative;
+  width: 300px;
+}
+
+.search-box .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: #52525b;
+}
+
+.search-box input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px 0 38px;
+  background-color: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  color: #e4e4e7;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.search-box input:focus {
+  border-color: #3b82f6;
+}
+
+.search-box input::placeholder {
+  color: #52525b;
+}
+
+/* Loading */
+.loading-container {
+  text-align: center;
+  padding: 80px 0;
+  color: #71717a;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #27272a;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin: 0 auto 12px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Table */
+.table-container {
+  background-color: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.tracks-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tracks-table thead th {
+  text-align: left;
+  padding: 14px 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #27272a;
+  white-space: nowrap;
+}
+
+.tracks-table tbody tr {
+  border-bottom: 1px solid #1e1e20;
+  transition: background-color 0.15s;
+}
+
+.tracks-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.tracks-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.tracks-table td {
+  padding: 16px 20px;
+  font-size: 13px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Track Code */
+.track-code-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.track-code {
+  color: #3b82f6;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+
+.copy-btn {
+  background: none;
+  border: none;
+  color: #52525b;
+  cursor: pointer;
+  padding: 2px;
+  transition: color 0.2s;
+}
+
+.copy-btn:hover {
+  color: #a1a1aa;
+}
+
+.copy-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Client */
+.client-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.client-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #27272a;
+  color: #a1a1aa;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.client-name {
+  color: #e4e4e7;
+  font-weight: 500;
+}
+
+.no-client {
+  color: #52525b;
+  font-style: italic;
+}
+
+/* Status */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-dot-icon {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.st-completed {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.st-completed.status-dot-icon {
+  background-color: #4ade80;
+}
+
+.st-warehouse {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.st-warehouse.status-dot-icon {
+  background-color: #fbbf24;
+}
+
+.st-transit {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.st-transit.status-dot-icon {
+  background-color: #60a5fa;
+}
+
+.st-pending {
+  background-color: rgba(113, 113, 122, 0.15);
+  color: #a1a1aa;
+}
+
+.st-pending.status-dot-icon {
+  background-color: #a1a1aa;
+}
+
+/* Dates */
+.date-cell {
+  color: #a1a1aa;
+  font-size: 13px;
+}
+
+/* Empty */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px !important;
+  color: #52525b;
+}
+
+/* Footer / Pagination */
+.table-footer {
+  padding: 14px 20px;
+  border-top: 1px solid #27272a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.showing-text {
+  font-size: 13px;
+  color: #71717a;
+}
+
+.showing-text strong {
+  color: #e4e4e7;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.page-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #27272a;
+  border: none;
+  border-radius: 6px;
+  color: #71717a;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+  background-color: #3f3f46;
+  color: #e4e4e7;
+}
+
+.page-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.page-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 4px;
+}
+
+.num-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #27272a;
+  border: none;
+  border-radius: 6px;
+  color: #a1a1aa;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.num-btn:hover {
+  background-color: #3f3f46;
+}
+
+.num-btn.active {
+  background-color: #3b82f6;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .history-page {
+    padding: 16px;
+  }
+
+  .filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .table-footer {
+    flex-direction: column;
+    gap: 12px;
   }
 }
 </style>

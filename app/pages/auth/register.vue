@@ -3,14 +3,8 @@
         <div class="auth-card">
             <header class="auth-header">
                 <div class="brand-group">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round"
-                        stroke-linejoin="round" class="truck-icon-small">
-                        <rect x="1" y="3" width="15" height="13"></rect>
-                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                        <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                        <circle cx="18.5" cy="18.5" r="2.5"></circle>
-                    </svg>
-                    <h2 class="brand-name">CargoTrack</h2>
+                    <img src="/logo.jpg" alt="Khan Cargo" class="brand-logo" />
+                    <h2 class="brand-name">Khan Cargo</h2>
                 </div>
                 <h1 class="page-title">Регистрация</h1>
                 <p class="page-subtitle">Создайте аккаунт для управления логистикой и отслеживания грузов.</p>
@@ -293,9 +287,11 @@ onMounted(() => {
     margin-bottom: 24px;
 }
 
-.truck-icon-small {
-    width: 24px;
-    height: 24px;
+.brand-logo {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
 .brand-name {
