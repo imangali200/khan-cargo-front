@@ -214,7 +214,7 @@
                             <div class="edit-select-wrapper">
                                 <select v-model="editAdminId" class="edit-input edit-select">
                                     <option value="" disabled>Select administrator</option>
-                                    <option v-for="admin in adminList" :key="admin.id" :value="admin.id">
+                                    <option v-for="admin in availableAdmins" :key="admin.id" :value="admin.id">
                                         {{ admin.name }} {{ admin.lastName }}
                                     </option>
                                     <option
@@ -295,7 +295,7 @@
                             <div class="edit-select-wrapper">
                                 <select v-model="createAdminId" class="edit-input edit-select">
                                     <option value="" disabled>Select administrator</option>
-                                    <option v-for="admin in adminList" :key="admin.id" :value="admin.id">
+                                    <option v-for="admin in availableAdmins" :key="admin.id" :value="admin.id">
                                         {{ admin.name }} {{ admin.lastName }}
                                     </option>
                                 </select>
@@ -454,6 +454,20 @@ const loadAdmins = async () => {
         adminList.value = data.data
     } catch { }
 }
+
+// Admins available for selection (exclude those already assigned to other branches)
+const availableAdmins = computed(() => {
+    const assignedAdminIds = branchData.value
+        .filter(b => b.admin?.id)
+        .map(b => b.admin!.id)
+
+    return adminList.value.filter(admin => {
+        // Always show the current branch's admin when editing
+        if (editTargetBranch.value && admin.id === editTargetBranch.value.admin?.id) return true
+        // Exclude admins already assigned to another branch
+        return !assignedAdminIds.includes(admin.id)
+    })
+})
 
 const deleteBranch = (branch: Branch) => {
     deleteTargetBranch.value = branch

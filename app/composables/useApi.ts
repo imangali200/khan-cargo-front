@@ -49,6 +49,7 @@ export const useApi = () => {
             remove: (id: number) => $axios.delete(`/tracking/${id}`),
             dashboard: () => $axios.get<DashboardStats>('/tracking/dashboard'),
             quickUpdate: (data: any) => $axios.patch<TrackingItem>('/tracking/quick-update', data),
+            notifyArrivals: () => $axios.post('/tracking/notify-arrivals'),
             importExcel: (data: FormData) => $axios.post('/tracking/import', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
             getImportLogs: (params?: any) => $axios.get<PaginatedResponse<any>>('/tracking/import/logs', { params }),
         },

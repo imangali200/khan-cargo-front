@@ -24,8 +24,12 @@ const courseUSD = ref<number>(0)
 
 // Track if values changed
 const hasChanges = computed(() => {
-    if (!settings.value) return false
-    return pricePerKg.value !== settings.value.pricePerKg || courseUSD.value !== settings.value.courseUSD
+    const origPrice = settings.value ? (Number(settings.value.pricePerKg) || 0) : 0
+    const origCourse = settings.value ? (Number(settings.value.courseUSD) || 0) : 0
+    const currPrice = Number(pricePerKg.value) || 0
+    const currCourse = Number(courseUSD.value) || 0
+
+    return currPrice !== origPrice || currCourse !== origCourse
 })
 
 async function loadSettings() {
@@ -49,15 +53,23 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
-    if (!settings.value || saving.value) return
+    if (saving.value) return
     saving.value = true
     try {
-        const response = await $axios.patch(`admin/settings/${settings.value.id}`, {
+        const payload = {
             pricePerKg: Number(pricePerKg.value),
             courseUSD: Number(courseUSD.value)
-        }, {
-            headers: { 'Authorization': `Bearer ${token.value}` }
-        })
+        }
+
+        // If settings already exist, patch them. Otherwise, create new ones.
+        const response = settings.value
+            ? await $axios.patch(`admin/settings/${settings.value.id}`, payload, {
+                headers: { 'Authorization': `Bearer ${token.value}` }
+            })
+            : await $axios.post(`admin/settings`, payload, {
+                headers: { 'Authorization': `Bearer ${token.value}` }
+            })
+
         settings.value = response.data
         toast.success('Настройки сохранены!', { position: 'top-center' })
     } catch (error: any) {
@@ -69,7 +81,11 @@ async function saveSettings() {
 }
 
 function resetValues() {
-    if (!settings.value) return
+    if (!settings.value) {
+        pricePerKg.value = 0
+        courseUSD.value = 0
+        return
+    }
     pricePerKg.value = settings.value.pricePerKg
     courseUSD.value = settings.value.courseUSD
 }

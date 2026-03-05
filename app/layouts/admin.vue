@@ -1,65 +1,115 @@
 <template>
     <div class="admin-app">
-        <header class="admin-header">
-            <div class="admin-header-content">
-                <router-link to="/admin" class="admin-logo">
-                     <span class="logo-text">👨‍💼 Admin</span>
-                 </router-link>
-                
-                <!-- Desktop Navigation -->
-                <nav class="admin-nav desktop-nav">
-                    <router-link to="/admin" class="nav-link">Главная</router-link>
-                    <router-link to="/admin/history" class="nav-link">История</router-link>
-                    <router-link to="/admin/import" class="nav-link">Импорт</router-link>
-                    <router-link to="/admin/new-receipts" class="nav-link">Новые поступления</router-link>
-                </nav>
-                
-                <button @click="logout" class="logout-btn desktop-logout">Выйти</button>
-                
-                <!-- Mobile Burger Button -->
-                <button @click="menuOpen = !menuOpen" class="burger-btn">
-                    <svg v-if="!menuOpen" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 12h18M3 6h18M3 18h18"/>
+        <!-- Sidebar -->
+        <aside class="sidebar" :class="{ 'mobile-open': menuOpen }">
+            <div class="sidebar-header">
+                <div class="logo-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="8" width="18" height="12" rx="2"></rect>
+                        <path d="M16 8V6a2 2 0 0 0-2-2H10a2 2 0 0 0-2 2v2"></path>
                     </svg>
-                    <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 6L6 18M6 6l12 12"/>
+                </div>
+                <div class="logo-text">
+                    <span class="title">Logistics Admin</span>
+                    <span class="subtitle">Warehouse Node 01</span>
+                </div>
+                <!-- Close btn for mobile -->
+                <button class="mobile-close-btn" @click="menuOpen = false">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                 </button>
             </div>
-            
-            <!-- Mobile Menu -->
-            <div v-if="menuOpen" class="mobile-menu">
-                <nav class="mobile-nav">
-                    <router-link to="/admin" class="mobile-link" @click="menuOpen = false">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-                        Главная
-                    </router-link>
-                    <router-link to="/admin/history" class="mobile-link" @click="menuOpen = false">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.313m0 0a2 2 0 0 0-1.172-1.778l-2.468-1.115a2 2 0 0 0-2.72 2.393v15.5"/></svg>
-                        История
-                    </router-link>
-                    <router-link to="/admin/import" class="mobile-link" @click="menuOpen = false">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        Импорт
-                    </router-link>
-                    <router-link to="/admin/new-receipts" class="mobile-link" @click="menuOpen = false">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-                        Новые поступления
-                    </router-link>
-                </nav>
-                <button @click="logout" class="mobile-logout">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14l5-5-5-5m5 5H9"/></svg>
-                    Выйти
+
+            <nav class="sidebar-nav">
+                <router-link to="/admin" class="nav-link" exact-active-class="active" @click="menuOpen = false">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>Dashboard</span>
+                </router-link>
+
+                <router-link to="/admin/cargo" class="nav-link" active-class="active" @click="menuOpen = false">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                        </path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    <span>Cargo Processing</span>
+                </router-link>
+
+                <router-link to="/admin/new-receipts" class="nav-link" active-class="active" @click="menuOpen = false">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                        <rect x="1" y="3" width="22" height="5"></rect>
+                        <line x1="10" y1="12" x2="14" y2="12"></line>
+                    </svg>
+                    <span>Inventory</span>
+                </router-link>
+
+                <router-link to="/admin/import" class="nav-link" active-class="active" @click="menuOpen = false">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <span>Import Data</span>
+                </router-link>
+
+                <router-link to="/admin/history" class="nav-link" active-class="active" @click="menuOpen = false">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span>Reports & History</span>
+                </router-link>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="nav-link logout-btn" @click="logout">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path>
+                    </svg>
+                    <span>Logout</span>
                 </button>
             </div>
-        </header>
-        <main class="admin-main">
-            <slot />
-        </main>
+        </aside>
+
+        <!-- Overlay for mobile -->
+        <div v-if="menuOpen" class="mobile-overlay" @click="menuOpen = false"></div>
+
+        <!-- Main Content Area -->
+        <div class="main-wrapper">
+            <!-- Topbar for mobile -->
+            <header class="mobile-topbar d-md-none">
+                <button class="burger-menu-btn" @click="menuOpen = true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="topbar-title">Cargo System</div>
+            </header>
+
+            <main class="content-area">
+                <slot />
+            </main>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
 const token = useCookie('token')
 const refreshToken = useCookie('refreshToken')
 const router = useRouter()
@@ -71,203 +121,229 @@ function logout() {
     menuOpen.value = false
     router.push('/auth/login')
 }
-
-// Close menu on route change
-watch(() => router.currentRoute.value.path, () => {
-    menuOpen.value = false
-})
 </script>
 
 <style scoped>
 .admin-app {
+    display: flex;
     min-height: 100vh;
-    width: 100%;
-    background: linear-gradient(135deg, #1a2332 0%, #223451 100%);
-    color: #fff;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #0f111a;
+    /* Very dark rich blue background, matching screenshot */
+    color: #e2e8f0;
+    font-family: 'Inter', -apple-system, sans-serif;
 }
 
-.admin-header {
-    position: sticky;
-    top: 0;
+/* Sidebar */
+.sidebar {
+    width: 260px;
+    background-color: #161824;
+    /* Sidebar background */
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
     z-index: 100;
-    background: rgba(26, 35, 50, 0.95);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+    transition: transform 0.3s ease;
 }
 
-.admin-header-content {
+.sidebar-header {
+    padding: 24px;
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 12px 16px;
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
-.admin-logo {
+.logo-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
     display: flex;
     align-items: center;
-    gap: 10px;
-    color: #fff;
-    text-decoration: none;
-    font-size: 18px;
-    font-weight: 700;
+    justify-content: center;
     flex-shrink: 0;
 }
 
-/* Desktop Navigation */
-.desktop-nav {
+.logo-box svg {
+    width: 20px;
+    height: 20px;
+}
+
+.logo-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #f8fafc;
+    letter-spacing: -0.2px;
+}
+
+.subtitle {
+    font-size: 11px;
+    font-weight: 500;
+    color: #94a3b8;
+}
+
+.mobile-close-btn {
     display: none;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    margin-left: auto;
+    padding: 0;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
     gap: 4px;
+    padding: 0 16px;
     flex: 1;
 }
 
 .nav-link {
-    padding: 8px 14px;
-    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    color: #94a3b8;
     text-decoration: none;
     font-size: 14px;
     font-weight: 500;
-    border-radius: 8px;
     transition: all 0.2s;
-    white-space: nowrap;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    width: 100%;
+}
+
+.nav-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    opacity: 0.8;
 }
 
 .nav-link:hover {
-    background: #1a1a1a;
-    color: #fff;
+    color: #f8fafc;
+    background-color: rgba(255, 255, 255, 0.03);
 }
 
-.nav-link.router-link-active {
-    background: #222;
-    color: #fff;
+.nav-link.active {
+    color: white;
+    background: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-.desktop-logout {
+.nav-link.active .nav-icon {
+    opacity: 1;
+}
+
+.sidebar-footer {
+    padding: 16px;
+    margin-top: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.logout-btn {
+    justify-content: flex-start;
+}
+
+.logout-btn:hover {
+    color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* Main Area */
+.main-wrapper {
+    flex: 1;
+    margin-left: 260px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.mobile-topbar {
     display: none;
-    padding: 8px 20px;
-    background: transparent;
-    border: 1px solid #333;
-    border-radius: 8px;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    flex-shrink: 0;
+    align-items: center;
+    padding: 16px 20px;
+    background-color: #161824;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    gap: 16px;
 }
 
-.desktop-logout:hover {
-    background: #222;
-}
-
-/* Burger Button */
-.burger-btn {
+.burger-menu-btn {
+    background: none;
+    border: none;
+    color: #f8fafc;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
-    background: transparent;
-    border: 1px solid #333;
-    border-radius: 10px;
-    color: #fff;
-    cursor: pointer;
-    margin-left: auto;
-    transition: all 0.2s;
 }
 
-.burger-btn:hover {
-    background: #222;
+.topbar-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #f8fafc;
 }
 
-/* Mobile Menu */
-.mobile-menu {
-    background: #000;
-    border-top: 1px solid #222;
-    padding: 16px;
-    animation: slideDown 0.2s ease-out;
-}
-
-@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.mobile-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.mobile-link {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    color: #888;
-    text-decoration: none;
-    font-size: 16px;
-    font-weight: 500;
-    border-radius: 12px;
-    transition: all 0.2s;
-}
-
-.mobile-link:hover,
-.mobile-link.router-link-active {
-    background: #1a1a1a;
-    color: #fff;
-}
-
-.mobile-logout {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.content-area {
+    flex: 1;
+    padding: 32px 40px;
     width: 100%;
-    padding: 14px 16px;
-    margin-top: 12px;
-    background: transparent;
-    border: 1px solid #333;
-    border-radius: 12px;
-    color: #ef4444;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-.mobile-logout:hover {
-    background: #1a1a1a;
+.mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 90;
+    display: none;
 }
 
-.admin-main {
-    padding: 16px;
-}
-
-/* Desktop styles */
-@media (min-width: 768px) {
-    .admin-header-content {
-        padding: 12px 24px;
-        gap: 24px;
+/* Responsive */
+@media (max-width: 991px) {
+    .sidebar {
+        transform: translateX(-100%);
     }
-    
-    .desktop-nav {
-        display: flex;
+
+    .sidebar.mobile-open {
+        transform: translateX(0);
     }
-    
-    .desktop-logout {
+
+    .mobile-close-btn {
         display: block;
     }
-    
-    .burger-btn {
-        display: none;
+
+    .main-wrapper {
+        margin-left: 0;
     }
-    
-    .mobile-menu {
-        display: none;
+
+    .mobile-topbar {
+        display: flex;
     }
-    
-    .admin-main {
-        padding: 24px;
+
+    .mobile-overlay {
+        display: block;
+    }
+
+    .content-area {
+        padding: 20px;
     }
 }
 </style>

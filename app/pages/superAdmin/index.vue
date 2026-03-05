@@ -107,20 +107,7 @@
                 </svg>
             </router-link>
 
-            <router-link to="/superAdmin/tracks" class="action-card">
-                <div class="ac-icon green">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                    </svg>
-                </div>
-                <div class="ac-text">
-                    <h3>Трек-коды</h3>
-                    <p>Общий список всех отправлений</p>
-                </div>
-                <svg class="ac-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-            </router-link>
+
 
             <router-link to="/superAdmin/import" class="action-card">
                 <div class="ac-icon orange">
