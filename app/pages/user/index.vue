@@ -18,6 +18,34 @@ const limit = 20
 const expandedComments = ref<Set<number>>(new Set())
 const commentText = ref<{ [key: number]: string }>({})
 
+const searchQuery = ref('')
+let searchTimeout: any = null
+
+watch(searchQuery, (newVal) => {
+    clearTimeout(searchTimeout)
+    searchTimeout = setTimeout(() => {
+        if (newVal.trim()) {
+            performSearch(newVal.trim())
+        } else {
+            posts.value = []
+            getPosts()
+        }
+    }, 500)
+})
+
+async function performSearch(query: string) {
+    loading.value = true
+    try {
+        const response = await api.feed.searchPosts(query)
+        posts.value = response.data.data
+        hasMore.value = false // simple search doesn't paginate for now
+    } catch (error) {
+        console.error('Search error:', error)
+    } finally {
+        loading.value = false
+    }
+}
+
 async function getPosts(isLoadMore = false) {
     if (loading.value) return
     loading.value = true
@@ -119,7 +147,7 @@ function formatDate(dateStr?: string) {
 // Mock helpers for visual parity with mockup
 function extractTitle(content: string) {
     const firstLine = content.split('\n')[0]
-    return firstLine.length < 50 ? firstLine : 'Обновление груза'
+    return firstLine && firstLine.length < 50 ? firstLine : 'Обновление груза'
 }
 
 function cleanContent(content: string) {
@@ -150,11 +178,25 @@ onMounted(() => {
 <template>
     <div class="cargo-feed">
         <div class="feed-container">
+            <!-- Search Bar -->
+            <div class="search-container">
+                <div class="search-box">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        class="search-icon">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" v-model="searchQuery" placeholder="Поиск обновлений груза..."
+                        class="search-input" />
+                </div>
+            </div>
+
             <!-- Composer Card -->
             <div class="composer-card">
                 <div class="composer-header">
                     <div class="user-avatar-small">
-                        <img v-if="userProfile?.avatar" :src="userProfile.avatar" alt="Avatar" />
+                        <img v-if="userProfile?.profilePhotoUrl" :src="userProfile.profilePhotoUrl ?? undefined"
+                            alt="Avatar" />
                         <div v-else class="avatar-placeholder-small">
                             {{ userProfile?.name?.charAt(0).toUpperCase() || 'U' }}
                         </div>
@@ -205,9 +247,12 @@ onMounted(() => {
             <div v-else class="posts-list">
                 <div v-for="post in posts" :key="post.id" class="post-card">
                     <div class="post-header">
-                        <NuxtLink :to="'/user/profile/' + post.author?.id" class="author-info author-link">
+                        <NuxtLink
+                            :to="(post.author?.id === userProfile?.id || !post.author?.id) ? '/user/me' : '/user/profile/' + post.author?.id"
+                            class="author-info author-link">
                             <div class="author-avatar">
-                                <img v-if="post.author?.avatar" :src="post.author.avatar" alt="Avatar" />
+                                <img v-if="post.author?.profilePhotoUrl" :src="post.author.profilePhotoUrl ?? undefined"
+                                    alt="Avatar" />
                                 <div v-else class="avatar-placeholder-small">
                                     {{ post.author?.name?.charAt(0).toUpperCase() || 'U' }}
                                 </div>
@@ -232,7 +277,7 @@ onMounted(() => {
                     </div>
 
                     <div v-if="post.imageUrl" class="post-media-container">
-                        <img :src="post.imageUrl" alt="Cargo" class="post-image" loading="lazy" />
+                        <img :src="post.imageUrl ?? undefined" alt="Cargo" class="post-image" loading="lazy" />
                     </div>
 
                     <div class="post-footer">
@@ -258,48 +303,64 @@ onMounted(() => {
                         </div>
                     </div>
 
-                    <!-- Comments Area -->
+                    <!-- Comments Area (Threads Style) -->
                     <div v-if="expandedComments.has(post.id)" class="comments-area">
-                        <div class="comment-input-box">
-                            <input v-model="commentText[post.id]" placeholder="Написать комментарий..."
-                                @keyup.enter="submitComment(post.id)" />
-                            <button @click="submitComment(post.id)" class="send-comment-btn"
-                                :disabled="!commentText[post.id]?.trim()">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2.5">
-                                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                                </svg>
-                            </button>
-                        </div>
                         <div v-if="post.comments?.length" class="comments-list">
-                            <div v-for="comment in post.comments" :key="comment.id" class="comment-item">
-                                <NuxtLink v-if="comment.author?.id" :to="'/user/profile/' + comment.author.id" class="comment-avatar-link">
-                                    <div class="comment-avatar">
-                                        {{ comment.author?.name?.charAt(0).toUpperCase() || 'U' }}
+                            <div v-for="(comment, idx) in post.comments" :key="comment.id" class="comment-item">
+                                <div class="thread-column">
+                                    <NuxtLink v-if="comment.author?.id"
+                                        :to="(comment.author.id === userProfile?.id) ? '/user/me' : '/user/profile/' + comment.author.id"
+                                        class="comment-avatar-link">
+                                        <div class="comment-avatar">
+                                            {{ (comment.author?.name || 'U').charAt(0).toUpperCase() }}
+                                        </div>
+                                    </NuxtLink>
+                                    <div v-else class="comment-avatar">
+                                        {{ (comment.author?.name || 'U').charAt(0).toUpperCase() }}
                                     </div>
-                                </NuxtLink>
-                                <div class="comment-avatar" v-else>
-                                    {{ comment.author?.name?.charAt(0).toUpperCase() || 'U' }}
+                                    <div v-if="idx !== post.comments.length - 1" class="thread-line"></div>
                                 </div>
                                 <div class="comment-body">
-                                    <NuxtLink v-if="comment.author?.id" :to="'/user/profile/' + comment.author.id" class="comment-user-link">
-                                        {{ comment.author?.name }} {{ comment.author?.lastName }}
-                                    </NuxtLink>
-                                    <span v-else class="comment-user">{{ comment.author?.name }}:</span>
-                                    <span class="comment-text">{{ comment.content }}</span>
+                                    <div class="comment-header">
+                                        <NuxtLink v-if="comment.author?.id"
+                                            :to="(comment.author.id === userProfile?.id) ? '/user/me' : '/user/profile/' + comment.author.id"
+                                            class="comment-user-link">
+                                            {{ comment.author?.name }}
+                                        </NuxtLink>
+                                        <span v-else class="comment-user">{{ comment.author?.name }}</span>
+                                    </div>
+                                    <p class="comment-text">{{ comment.content }}</p>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div class="comment-input-row">
+                            <div class="user-avatar-tiny">
+                                <img v-if="userProfile?.profilePhotoUrl" :src="userProfile.profilePhotoUrl ?? undefined"
+                                    alt="Avatar" />
+                                <div v-else class="avatar-placeholder-tiny">
+                                    {{ userProfile?.name?.charAt(0).toUpperCase() || 'U' }}
+                                </div>
+                            </div>
+                            <div class="comment-input-box">
+                                <input v-model="commentText[post.id]" placeholder="Написать ответ..."
+                                    @keyup.enter="submitComment(post.id)" />
+                                <button @click="submitComment(post.id)" class="send-comment-btn"
+                                    :disabled="!commentText[post.id]?.trim()">
+                                    Опубликовать
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div v-if="hasMore" class="load-more">
-                    <button @click="loadMore" :disabled="loading">{{ loading ? 'Загрузка...' : 'Загрузить еще' }}</button>
+                    <button @click="loadMore" :disabled="loading">{{ loading ? 'Загрузка...' : 'Загрузить еще'
+                    }}</button>
                 </div>
-            </div>
 
-            <div class="bottom-spacer"></div>
+                <div class="bottom-spacer"></div>
+            </div>
         </div>
     </div>
 </template>
@@ -313,9 +374,48 @@ onMounted(() => {
 }
 
 .feed-container {
-    max-width: 680px;
+    max-width: 600px;
     margin: 0 auto;
     padding: 16px;
+}
+
+.search-container {
+    margin-bottom: 24px;
+}
+
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 0 16px;
+    transition: border-color 0.2s;
+}
+
+.search-box:focus-within {
+    border-color: #2563eb;
+}
+
+.search-icon {
+    color: #8b949e;
+    flex-shrink: 0;
+}
+
+.search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 14px 12px;
+    color: white;
+    font-size: 15px;
+    outline: none;
+    font-family: inherit;
+}
+
+.search-input::placeholder {
+    color: #8b949e;
 }
 
 /* Composer */
@@ -552,45 +652,165 @@ onMounted(() => {
     color: #ef4444;
 }
 
+.footer-action-btn.active svg {
+    fill: #ef4444;
+    stroke: #ef4444;
+}
 
-/* Comments */
+
+/* Threads Style Comments */
 .comments-area {
-    padding: 12px 16px;
+    padding: 16px;
     border-top: 1px solid #30363d;
-    background-color: #0d1117;
+    background-color: transparent;
+}
+
+.comments-list {
+    margin-bottom: 20px;
+}
+
+.comment-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 0;
+    /* Vertical line handles spacing */
+}
+
+.thread-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 32px;
+}
+
+.comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #30363d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+    z-index: 1;
+}
+
+.comment-avatar-link {
+    text-decoration: none;
+}
+
+.thread-line {
+    width: 2px;
+    background-color: #30363d;
+    flex-grow: 1;
+    margin: 4px 0;
+}
+
+.comment-body {
+    flex: 1;
+    padding-bottom: 20px;
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.comment-user-link,
+.comment-user {
+    font-weight: 700;
+    font-size: 15px;
+    color: white;
+    text-decoration: none;
+}
+
+.comment-user-link:hover {
+    text-decoration: underline;
+}
+
+.comment-time {
+    font-size: 14px;
+    color: #8b949e;
+}
+
+.comment-text {
+    color: #e6edf3;
+    font-size: 14px;
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Input Row */
+.comment-input-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.user-avatar-tiny {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: #30363d;
+    flex-shrink: 0;
+}
+
+.user-avatar-tiny img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-placeholder-tiny {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #8b949e;
+    font-size: 12px;
 }
 
 .comment-input-box {
+    flex: 1;
     display: flex;
-    gap: 8px;
     align-items: center;
+    background-color: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 20px;
+    padding: 2px 4px 2px 14px;
+}
+
+.comment-input-box:focus-within {
+    border-color: #8b949e;
 }
 
 .comment-input-box input {
     flex: 1;
-    background-color: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 8px;
-    padding: 10px 12px;
+    background: transparent;
+    border: none;
     color: white;
-    font-size: 13px;
+    font-size: 14px;
     outline: none;
-}
-
-.comment-input-box input:focus {
-    border-color: #2563eb;
+    padding: 8px 0;
 }
 
 .send-comment-btn {
     background: transparent;
     border: none;
     color: #2563eb;
+    font-weight: 700;
+    font-size: 13px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;
-    transition: all 0.2s;
+    padding: 8px 12px;
+    border-radius: 12px;
 }
 
 .send-comment-btn:disabled {
@@ -599,58 +819,7 @@ onMounted(() => {
 }
 
 .send-comment-btn:hover:not(:disabled) {
-    transform: scale(1.1) translateX(2px);
     color: #3b82f6;
-}
-
-.comments-list {
-    margin-top: 12px;
-}
-
-.comment-item {
-    font-size: 13px;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-}
-
-.comment-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #2563eb, #1e40af);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    color: white;
-    flex-shrink: 0;
-}
-
-.comment-avatar-link {
-    text-decoration: none;
-}
-
-.comment-body {
-    flex: 1;
-}
-
-.comment-user-link {
-    font-weight: 700;
-    margin-right: 6px;
-    color: #2563eb;
-    text-decoration: none;
-    font-size: 13px;
-}
-
-.comment-user-link:hover {
-    text-decoration: underline;
-}
-
-.comment-text {
-    color: #8b949e;
 }
 
 /* Utils */

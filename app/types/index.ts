@@ -1,28 +1,34 @@
 export interface User {
     id: number;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt?: string | null;
     name: string;
     lastName: string;
-    telegramUsername?: string;
-    telegramNickname?: string;
+    telegramUsername?: string | null;
+    telegramNickname?: string | null;
+    email?: string | null;
+    profilePhotoUrl?: string | null;
+    profilePhotoPublicId?: string | null;
     phoneNumber: string;
     userCode: string;
-    role: 'USER' | 'ADMIN' | 'SUPERADMIN';
+    role: 'user' | 'admin' | 'superadmin' | 'USER' | 'ADMIN' | 'SUPERADMIN';
     branchId: number;
     branch?: Branch;
     isActive: boolean;
-    avatar?: string;
-    createAt: string;
 }
 
 export interface Branch {
     id: number;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt?: string | null;
     name: string;
-    address?: string;
+    address?: string | null;
     isActive: boolean;
-    adminId?: number;
+    adminId?: number | null;
     admin?: User;
-    telegramThreadId?: number;
-    createAt: string;
+    telegramThreadId?: number | null;
 }
 
 export interface Post {

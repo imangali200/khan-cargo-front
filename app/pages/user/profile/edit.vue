@@ -17,6 +17,9 @@ const saving = ref(false)
 const editData = ref({
     name: '',
     lastName: '',
+    telegramUsername: '',
+    email: '',
+    branchId: null as number | null,
 })
 
 const avatarFile = ref<File | null>(null)
@@ -28,8 +31,11 @@ async function loadProfile() {
         profile.value = data
         editData.value.name = data.name || ''
         editData.value.lastName = data.lastName || ''
-        if (data.avatar) {
-            avatarPreview.value = data.avatar
+        editData.value.telegramUsername = data.telegramUsername || ''
+        editData.value.email = data.email || ''
+        editData.value.branchId = data.branchId || null
+        if (data.profilePhotoUrl) {
+            avatarPreview.value = data.profilePhotoUrl
         }
     } catch {
         toast.error('Ошибка при загрузке профиля')
@@ -57,7 +63,17 @@ async function saveProfile() {
         await api.profile.updateProfile({
             name: editData.value.name,
             lastName: editData.value.lastName,
+            telegramUsername: editData.value.telegramUsername || undefined,
+            email: editData.value.email || undefined,
+            branchId: editData.value.branchId || undefined,
         })
+
+        if (avatarFile.value) {
+            const formData = new FormData()
+            formData.append('photo', avatarFile.value)
+            await api.profile.uploadProfilePhoto(formData)
+        }
+
         toast.success('Профиль успешно обновлен')
         router.push('/user/me')
     } catch (e: any) {
@@ -104,8 +120,10 @@ onMounted(() => {
                         <span v-else class="initial">{{ profile?.name?.charAt(0).toUpperCase() }}</span>
                     </div>
                     <label class="avatar-edit-btn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                             <circle cx="12" cy="13" r="4" />
                         </svg>
                         <input type="file" accept="image/*" @change="onAvatarChange" hidden />
@@ -136,6 +154,27 @@ onMounted(() => {
                 <label class="field-label">ФАМИЛИЯ</label>
                 <div class="input-wrap">
                     <input v-model="editData.lastName" type="text" placeholder="Введите фамилию" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="field-label">TELEGRAM USERNAME</label>
+                <div class="input-wrap">
+                    <input v-model="editData.telegramUsername" type="text" placeholder="Введите username" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="field-label">EMAIL</label>
+                <div class="input-wrap">
+                    <input v-model="editData.email" type="email" placeholder="Введите email" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="field-label">ID ФИЛИАЛА</label>
+                <div class="input-wrap">
+                    <input v-model.number="editData.branchId" type="number" placeholder="Введите ID филиала" />
                 </div>
             </div>
 
@@ -254,7 +293,7 @@ onMounted(() => {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s;
 }
 
@@ -315,11 +354,12 @@ onMounted(() => {
 /* Bottom Action */
 .bottom-action {
     position: fixed;
-    bottom: calc(85px + env(safe-area-inset-bottom, 0px)); /* Clear bottom nav */
+    bottom: calc(85px + env(safe-area-inset-bottom, 0px));
+    /* Clear bottom nav */
     left: 0;
     right: 0;
     padding: 24px 20px 24px;
-    background: linear-gradient(0deg, #000 70%, rgba(0,0,0,0) 100%);
+    background: linear-gradient(0deg, #000 70%, rgba(0, 0, 0, 0) 100%);
     display: flex;
     justify-content: center;
     z-index: 10;
@@ -368,6 +408,8 @@ onMounted(() => {
 }
 
 @keyframes rotate {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 </style>

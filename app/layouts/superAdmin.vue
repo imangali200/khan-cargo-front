@@ -37,14 +37,7 @@
                     </svg>
                     <span class="nav-label hide-on-collapse">Users</span>
                 </router-link>
-                <router-link to="/superAdmin/tracks" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="21 8 21 21 3 21 3 8"></polyline>
-                        <rect x="1" y="3" width="22" height="5"></rect>
-                        <line x1="10" y1="12" x2="14" y2="12"></line>
-                    </svg>
-                    <span class="nav-label hide-on-collapse">Inventory</span>
-                </router-link>
+
                 <router-link to="/superAdmin/history" class="nav-link">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
@@ -76,10 +69,10 @@
 
             <div class="sidebar-footer">
                 <div class="user-profile">
-                    <div class="avatar-placeholder">MT</div>
+                    <div class="avatar-placeholder">{{ userInitials }}</div>
                     <div class="user-info hide-on-collapse">
-                        <span class="user-name">Marcus Thorne</span>
-                        <span class="user-role">System Administrator</span>
+                        <span class="user-name">{{ profileData?.name || '' }} {{ profileData?.lastName || '' }}</span>
+                        <span class="user-role">{{ roleLabel }}</span>
                     </div>
                     <button @click="logout" class="logout-icon-btn hide-on-collapse" title="Logout">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -99,8 +92,25 @@
 </template>
 
 <script setup lang="ts">
+import type { User } from '~/types'
+
 const token = useCookie('token')
+const api = useApi()
 const sidebarCollapsed = ref(false)
+const profileData = ref<User | null>(null)
+
+const userInitials = computed(() => {
+    const n = profileData.value?.name?.charAt(0)?.toUpperCase() || ''
+    const l = profileData.value?.lastName?.charAt(0)?.toUpperCase() || ''
+    return n + l || 'U'
+})
+
+const roleLabel = computed(() => {
+    const role = profileData.value?.role?.toLowerCase()
+    if (role === 'superadmin') return 'Super Admin'
+    if (role === 'admin') return 'Admin'
+    return 'User'
+})
 
 function toggleSidebar() {
     sidebarCollapsed.value = !sidebarCollapsed.value
@@ -110,6 +120,13 @@ function logout() {
     token.value = null
     navigateTo('/auth/login')
 }
+
+onMounted(async () => {
+    try {
+        const { data } = await api.profile.getProfile()
+        profileData.value = data
+    } catch { }
+})
 </script>
 
 <style scoped>

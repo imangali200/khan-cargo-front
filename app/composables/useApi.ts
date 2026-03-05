@@ -13,9 +13,11 @@ export const useApi = () => {
         profile: {
             getProfile: () => $axios.get<User>('/profile'),
             updateProfile: (data: any) => $axios.patch<User>('/profile', data),
+            uploadProfilePhoto: (data: FormData) => $axios.patch<{ profilePhotoUrl: string }>('/user/profile-photo', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
             getMyPosts: (params?: any) => $axios.get<PaginatedResponse<Post>>('/profile/posts', { params }),
-            getLikedPosts: (params?: any) => $axios.get<PaginatedResponse<Post>>('/profile/liked-posts', { params }),
+            getLikedPosts: (params?: any) => $axios.get<PaginatedResponse<Post>>('/profile/liked', { params }),
             getMyTracking: (params?: any) => $axios.get<PaginatedResponse<TrackingItem>>('/profile/tracking', { params }),
+            getMyArchiveTracking: (params?: any) => $axios.get<PaginatedResponse<TrackingItem>>('/profile/trackingArchive', { params }),
         },
         branches: {
             findAll: () => $axios.get<Branch[]>('/branches'),
@@ -26,6 +28,7 @@ export const useApi = () => {
         },
         feed: {
             getFeed: (params?: any) => $axios.get<PaginatedResponse<Post>>('/feed', { params }),
+            searchPosts: (search: string) => $axios.get<PaginatedResponse<Post>>(`/feed/posts/${search}`),
             createPost: (data: FormData) => $axios.post<Post>('/feed/posts', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
             deletePost: (id: number) => $axios.delete(`/feed/posts/${id}`),
             toggleLike: (id: number) => $axios.post(`/feed/posts/${id}/like`),

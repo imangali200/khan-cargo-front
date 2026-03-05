@@ -34,14 +34,14 @@ const products = computed(() => activeTab.value === 'active' ? allProducts.value
 
 async function getProducts() {
     try {
-        const { data } = await api.profile.getMyTracking({ isArchived: false })
+        const { data } = await api.profile.getMyTracking()
         allProducts.value = data.data
     } catch { }
 }
 
 async function getArchiveProducts() {
     try {
-        const { data } = await api.profile.getMyTracking({ isArchived: true })
+        const { data } = await api.profile.getMyArchiveTracking()
         archiveProducts.value = data.data
     } catch { }
 }
@@ -125,13 +125,14 @@ async function saveEditProduct() {
             trackingCode: editData.value.trackingCode.trim(),
             description: editData.value.description.trim()
         })
-        
-        // Update local state without full reload
-        const index = allProducts.value.findIndex(p => p.id === editData.value.id)
-        if (index !== -1) {
-            allProducts.value[index] = { ...allProducts.value[index], ...data }
+
+        // Immediately refetch to show changes
+        if (activeTab.value === 'active') {
+            await getProducts()
+        } else {
+            await getArchiveProducts()
         }
-        
+
         showEditModal.value = false
         toast.success('Трек успешно обновлен!')
     } catch (e: any) {
@@ -226,19 +227,24 @@ onMounted(async () => {
                             <span class="track-id">#{{ product.trackingCode }}</span>
                         </div>
                         <div class="card-actions">
-                            <button v-if="activeTab === 'active'" @click="editProduct(product)" class="action-icon-btn edit-btn" title="Редактировать">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <button v-if="activeTab === 'active'" @click="editProduct(product)"
+                                class="action-icon-btn edit-btn" title="Редактировать">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                                 </svg>
                             </button>
-                            <button v-if="activeTab === 'archive'" @click="restoreProduct(product.id)" class="action-icon-btn restore-btn" title="Восстановить">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <button v-if="activeTab === 'archive'" @click="restoreProduct(product.id)"
+                                class="action-icon-btn restore-btn" title="Восстановить">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
                                     <polyline points="1 4 1 10 7 10" />
                                     <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
                                 </svg>
                             </button>
-                            <button @click="deleteProduct(product.id)" class="action-icon-btn trash-btn" title="Удалить">
+                            <button @click="deleteProduct(product.id)" class="action-icon-btn trash-btn"
+                                title="Удалить">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
                                     <polyline points="3 6 5 6 21 6"></polyline>

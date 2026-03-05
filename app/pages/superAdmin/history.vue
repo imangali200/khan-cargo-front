@@ -51,8 +51,8 @@
             <tr v-for="item in paginatedProducts" :key="item.id" class="table-row">
               <td>
                 <div class="track-code-cell">
-                  <span class="track-code">{{ item.productId }}</span>
-                  <button class="copy-btn" @click="copyTrackCode(item.productId)" title="Копировать">
+                  <span class="track-code">{{ item.trackingCode }}</span>
+                  <button class="copy-btn" @click="copyTrackCode(item.trackingCode)" title="Копировать">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -61,9 +61,9 @@
                 </div>
               </td>
               <td>
-                <div v-if="item.user" class="client-cell">
-                  <div class="client-avatar">{{ getInitials(item.user) }}</div>
-                  <span class="client-name">{{ item.user.name }} {{ item.user.surname }}</span>
+                <div v-if="item.clientName" class="client-cell">
+                  <div class="client-avatar">{{ getInitials(item) }}</div>
+                  <span class="client-name">{{ item.clientName }}</span>
                 </div>
                 <span v-else class="no-client">Не привязан</span>
               </td>
@@ -73,9 +73,9 @@
                   {{ getStatusLabel(item) }}
                 </span>
               </td>
-              <td class="date-cell">{{ formatDate(item.china_warehouse) }}</td>
-              <td class="date-cell">{{ formatDate(item.aicargo) }}</td>
-              <td class="date-cell">{{ formatDate(item.given_to_client) }}</td>
+              <td class="date-cell">{{ formatDate(item.chinaArrivalDate) }}</td>
+              <td class="date-cell">{{ formatDate(item.aicargoArrivalDate) }}</td>
+              <td class="date-cell">{{ formatDate(item.deliveryDate) }}</td>
             </tr>
 
             <!-- Empty -->
@@ -120,10 +120,10 @@ definePageMeta({
 
 import { ref, computed, onMounted, watch } from 'vue'
 import { useToast } from '~/composables/useToast'
+import type { TrackingItem } from '~/types'
 
 const toast = useToast()
-const { $axios } = useNuxtApp()
-const token = useCookie('token')
+const api = useApi()
 
 const loading = ref(false)
 const activeTab = ref('all')
@@ -138,46 +138,25 @@ const tabs = [
   { label: 'Выдано', value: 'completed' }
 ]
 
-interface User {
-  id: number
-  phoneNumber: string
-  name: string
-  surname: string
-  code: string
-  branch: string
-}
-
-interface Product {
-  id: number
-  productId: string
-  china_warehouse: string | null
-  aicargo: string | null
-  given_to_client: string | null
-  user: User | null
-  createdAt: string
-  updatedAt: string
-}
-
-const products = ref<Product[]>([])
+const products = ref<TrackingItem[]>([])
 
 const filteredProducts = computed(() => {
   let result = products.value
 
   if (activeTab.value === 'china') {
-    result = result.filter(p => p.china_warehouse && !p.aicargo && !p.given_to_client)
+    result = result.filter(p => p.currentStatus === 'ARRIVED_CHINA_WAREHOUSE')
   } else if (activeTab.value === 'warehouse') {
-    result = result.filter(p => p.aicargo && !p.given_to_client)
+    result = result.filter(p => p.currentStatus === 'ARRIVED_BRANCH')
   } else if (activeTab.value === 'completed') {
-    result = result.filter(p => p.given_to_client)
+    result = result.filter(p => p.currentStatus === 'PICKED_UP')
   }
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     result = result.filter(p =>
-      p.productId.toLowerCase().includes(query) ||
-      (p.user?.name && p.user.name.toLowerCase().includes(query)) ||
-      (p.user?.phoneNumber && p.user.phoneNumber.includes(query)) ||
-      (p.user?.code && p.user.code.toLowerCase().includes(query))
+      p.trackingCode.toLowerCase().includes(query) ||
+      (p.clientName && p.clientName.toLowerCase().includes(query)) ||
+      (p.clientPhone && p.clientPhone.includes(query))
     )
   }
 
@@ -203,23 +182,25 @@ const visiblePages = computed(() => {
 
 watch([activeTab, searchQuery], () => { currentPage.value = 1 })
 
-const getStatusLabel = (item: Product) => {
-  if (item.given_to_client) return 'Выдан'
-  if (item.aicargo) return 'На складе'
-  if (item.china_warehouse) return 'В пути'
+const getStatusLabel = (item: TrackingItem) => {
+  if (item.currentStatus === 'PICKED_UP') return 'Выдан'
+  if (item.currentStatus === 'ARRIVED_BRANCH') return 'На складе'
+  if (item.currentStatus === 'ARRIVED_CHINA_WAREHOUSE') return 'В пути'
   return 'Ожидание'
 }
 
-const getStatusClass = (item: Product) => {
-  if (item.given_to_client) return 'st-completed'
-  if (item.aicargo) return 'st-warehouse'
-  if (item.china_warehouse) return 'st-transit'
+const getStatusClass = (item: TrackingItem) => {
+  if (item.currentStatus === 'PICKED_UP') return 'st-completed'
+  if (item.currentStatus === 'ARRIVED_BRANCH') return 'st-warehouse'
+  if (item.currentStatus === 'ARRIVED_CHINA_WAREHOUSE') return 'st-transit'
   return 'st-pending'
 }
 
-const getInitials = (user: User) => {
-  const first = user.name?.charAt(0)?.toUpperCase() || ''
-  const last = user.surname?.charAt(0)?.toUpperCase() || ''
+const getInitials = (item: TrackingItem) => {
+  if (!item.clientName) return '??'
+  const parts = item.clientName.split(' ')
+  const first = parts[0]?.charAt(0)?.toUpperCase() || ''
+  const last = parts[1]?.charAt(0)?.toUpperCase() || ''
   return first + last
 }
 
@@ -228,7 +209,7 @@ const copyTrackCode = (code: string) => {
   toast.success('Трек-код скопирован')
 }
 
-const formatDate = (dateStr: string | null) => {
+const formatDate = (dateStr: string | null | undefined) => {
   if (!dateStr) return '—'
   const date = new Date(dateStr)
   return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -244,10 +225,8 @@ const getShowingRange = () => {
 const fetchProducts = async () => {
   loading.value = true
   try {
-    const res = await $axios.get('admin/imported-tracks', {
-      headers: { Authorization: `Bearer ${token.value}` }
-    })
-    products.value = res.data || []
+    const { data } = await api.tracking.findAll({ limit: 1000 })
+    products.value = data.data
   } catch (err: any) {
     toast.error('Ошибка при загрузке треков')
   } finally {
