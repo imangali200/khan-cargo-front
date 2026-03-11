@@ -1,188 +1,162 @@
-<script setup lang="ts">
-definePageMeta({
-  layout: 'admin',
-  middleware: 'auth'
-})
-
-import { ref } from 'vue'
-import { useToast } from '~/composables/useToast'
-
-const toast = useToast()
-const api = useApi()
-
-const fileInput = ref<HTMLInputElement | null>(null)
-const selectedFile = ref<File | null>(null)
-const selectedTime = ref<string>(getDefaultTime())
-const loading = ref<boolean>(false)
-
-// Removed time formatters since they are no longer needed
-
-const openFilePicker = () => {
-  fileInput.value?.click()
-}
-
-const onFileChange = (e: any) => {
-  selectedFile.value = e.target.files[0]
-}
-
-const uploadFile = async () => {
-  if (!selectedFile.value) {
-    toast.error("Файл не выбран!", { position: 'top-center' })
-    return
-  }
-
-  if (!selectedTime.value) {
-    toast.error("Время не выбрано!", { position: 'top-center' })
-    return
-  }
-
-  loading.value = true
-
-  try {
-    const formData = new FormData()
-    formData.append("file", selectedFile.value)
-    formData.append("targetStatus", "ARRIVED_BRANCH")
-
-    await api.tracking.importExcel(formData)
-
-    toast.success("Файл успешно загружен!", { position: 'top-center' })
-    selectedFile.value = null
-
-  } catch (err) {
-    toast.error("Ошибка при загрузке файла", { position: 'top-center' })
-    console.error(err)
-  } finally {
-    loading.value = false
-  }
-}
-</script>
-
 <template>
-  <div class="tw-py-6 animate-fadeIn">
-    <div class="tw-mb-6">
-      <div class="tw-flex tw-items-center tw-gap-2 tw-text-sm tw-mb-4">
-        <router-link class="tw-text-amber-400 hover:tw-text-amber-300 tw-transition-colors"
-          to="/admin">Главная</router-link>
-        <span class="tw-text-white/60">→</span>
-        <span class="tw-text-white/60">Импорт</span>
+  <div class="import-center animate-slide-up">
+    <!-- Premium Header Area -->
+    <header class="page-header">
+      <div class="title-section">
+        <h1>Приём товара (Импорт)</h1>
+        <p class="subtitle">Массовое добавление трек-кодов со статусом "Принят на складе (РК)"</p>
       </div>
-      <h1 class="tw-text-2xl tw-font-bold tw-text-white tw-mb-2">Импорт трек-кодов</h1>
-      <p class="tw-text-white/60">Загрузите файл с трек-кодами для массового добавления</p>
-    </div>
+    </header>
 
-    <div class="tw-bg-white/[0.03] tw-backdrop-blur-xl tw-border tw-border-white/10 tw-rounded-2xl tw-p-6 tw-mb-6">
-      <div class="tw-flex tw-items-center tw-gap-3 tw-mb-6">
-        <div
-          class="tw-w-12 tw-h-12 tw-rounded-xl tw-bg-gradient-to-br tw-from-amber-500 tw-to-orange-600 tw-flex tw-items-center tw-justify-center tw-text-white">
-          <svg class="tw-w-6 tw-h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+    <!-- Upload Zone -->
+    <div class="upload-area glass-card" :class="{ dragging: isDragging }" @dragover.prevent="isDragging = true"
+      @dragleave.prevent="isDragging = false" @drop.prevent="handleDrop">
+      <div class="upload-content" v-if="!uploading && !importComplete">
+        <div class="upload-icon taraz">
+          📦
+        </div>
+        <h2>Перетащите файл сюда</h2>
+        <p>Поддерживаемые форматы: <strong>.xlsx, .csv, .txt</strong></p>
+        <input type="file" ref="fileInput" class="hidden-input" @change="handleFileSelect" accept=".xlsx,.csv,.txt" />
+        <button class="select-btn" @click="fileInput?.click()">Выбрать файл на компьютере</button>
+      </div>
+
+      <!-- Upload Progress -->
+      <div class="progress-container" v-if="uploading">
+        <div class="spinner"></div>
+        <h3>Обработка данных...</h3>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" :style="{ width: progress + '%' }"></div>
+        </div>
+        <p class="progress-text">Загрузка трек-кодов: {{ progress }}%</p>
+      </div>
+
+      <!-- Success State -->
+      <div class="success-state" v-if="importComplete">
+        <div class="success-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z" fill="#fbbf24" />
+            <path d="M6 4L6.8 6.4L9 7L6.8 7.6L6 10L5.2 7.6L3 7L5.2 6.4L6 4Z" fill="#fbbf24" />
+            <path d="M19 18L19.5 19.5L21 20L19.5 20.5L19 22L18.5 20.5L17 20L18.5 19.5L19 18Z" fill="#fbbf24" />
           </svg>
         </div>
-        <div>
-          <h2 class="tw-text-lg tw-font-semibold tw-text-white">Загрузка файла</h2>
-          <p class="tw-text-white/60 tw-text-sm">Выберите файл .xlsx или .txt</p>
-        </div>
-      </div>
-
-      <div class="tw-space-y-4">
-        <div class="tw-flex tw-flex-col sm:tw-flex-row tw-gap-3 sm:tw-items-center">
-          <label class="tw-text-white/70 tw-font-medium tw-w-24 tw-flex-shrink-0">Файл:</label>
-          <div class="tw-flex tw-items-center tw-gap-3 tw-flex-1">
-            <input ref="fileInput" type="file" accept=".xlsx,.txt" @change="onFileChange" class="tw-hidden">
-            <button type="button" @click="openFilePicker"
-              class="tw-px-4 tw-py-2.5 tw-bg-gradient-to-r tw-from-amber-500 tw-to-orange-500 tw-rounded-xl tw-text-white tw-font-medium tw-text-sm hover:tw-shadow-lg hover:tw-shadow-amber-500/30 tw-transition-all tw-flex tw-items-center tw-gap-2">
-              <svg class="tw-w-5 tw-h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-              </svg>
-              Выбрать файл
-            </button>
-            <span class="tw-text-white/60 tw-text-sm tw-truncate">
-              {{ selectedFile ? selectedFile.name : 'Файл не выбран' }}
-            </span>
-          </div>
-        </div>
-
-        <div class="tw-hidden">
-          <label class="tw-text-white/70 tw-font-medium tw-w-24 tw-flex-shrink-0">Время:</label>
-          <input type="datetime-local" v-model="selectedTime"
-            class="tw-flex-1 sm:tw-max-w-xs tw-bg-white/5 tw-border tw-border-white/10 tw-rounded-xl tw-px-4 tw-py-2.5 tw-text-white tw-outline-none focus:tw-border-amber-500/50 tw-transition-colors">
-        </div>
-
-        <div class="tw-flex tw-flex-col sm:tw-flex-row tw-gap-3 sm:tw-items-center tw-pt-2">
-          <div class="tw-w-24 tw-hidden sm:tw-block"></div>
-          <button @click="uploadFile" :disabled="loading || !selectedFile"
-            class="tw-px-6 tw-py-3 tw-bg-gradient-to-r tw-from-emerald-500 tw-to-green-600 tw-rounded-xl tw-text-white tw-font-semibold hover:tw-shadow-lg hover:tw-shadow-emerald-500/30 tw-transition-all disabled:tw-opacity-50 disabled:tw-cursor-not-allowed tw-flex tw-items-center tw-justify-center tw-gap-2">
-            <svg v-if="loading" class="tw-w-5 tw-h-5 tw-animate-spin" fill="none" stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <svg v-else class="tw-w-5 tw-h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-            </svg>
-            {{ loading ? 'Загрузка...' : 'Загрузить' }}
-          </button>
+        <h2>Импорт завершен!</h2>
+        <p>Трек-коды успешно приняты на склад.</p>
+        <div class="success-actions">
+          <router-link to="/admin/cargo" class="view-btn">Перейти к сканеру</router-link>
+          <button class="retry-btn" @click="resetImport">Загрузить еще</button>
         </div>
       </div>
     </div>
 
-    <div class="tw-bg-red-500/10 tw-border tw-border-red-500/20 tw-rounded-2xl tw-p-4 tw-mb-6">
-      <div class="tw-flex tw-items-start tw-gap-3">
-        <div
-          class="tw-w-10 tw-h-10 tw-rounded-xl tw-bg-red-500/20 tw-flex tw-items-center tw-justify-center tw-text-red-400 tw-flex-shrink-0">
-          <svg class="tw-w-5 tw-h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        </div>
-        <div>
-          <p class="tw-text-red-400 tw-font-medium">Максимум 900 трек-кодов</p>
-          <p class="tw-text-red-400/70 tw-text-sm">Если больше — разделите на части и импортируйте заново</p>
-        </div>
+    <!-- Limits Warning -->
+    <div class="limit-warning glass-card">
+      <span class="l-icon">⚠️</span>
+      <div class="l-txt">
+        <strong>Лимит обработки: 900 кодов</strong>
+        <p>Для стабильной работы системы объем одного файла не должен превышать 900 записей.</p>
       </div>
     </div>
 
-    <div class="tw-bg-white/[0.03] tw-backdrop-blur-xl tw-border tw-border-white/10 tw-rounded-2xl tw-p-5">
-      <div class="tw-flex tw-items-center tw-gap-3 tw-mb-4">
-        <div
-          class="tw-w-10 tw-h-10 tw-rounded-xl tw-bg-amber-500/20 tw-flex tw-items-center tw-justify-center tw-text-amber-400">
-          <svg class="tw-w-5 tw-h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+    <!-- Information Guide -->
+    <section class="guide-section">
+      <h3>Инструкция по загрузке</h3>
+      <div class="guide-grid">
+        <div class="guide-item glass-card">
+          <span class="g-num">01</span>
+          <p>Подготовьте Excel файл с трек-кодами в первом столбце (А)</p>
         </div>
-        <h3 class="tw-text-white tw-font-semibold">Инструкция</h3>
+        <div class="guide-item glass-card">
+          <span class="g-num">02</span>
+          <p>Загрузите файл в окно выше</p>
+        </div>
+        <div class="guide-item glass-card">
+          <span class="g-num">03</span>
+          <p>Все трек-коды автоматически получат статус "Принят на складе"</p>
+        </div>
       </div>
-      <ul class="tw-space-y-2 tw-text-white/60 tw-text-sm">
-        <li class="tw-flex tw-items-start tw-gap-2">
-          <span class="tw-text-amber-400">•</span>
-          Трек-коды должны быть размещены начиная с первого столбца (A)
-        </li>
-        <li class="tw-flex tw-items-start tw-gap-2">
-          <span class="tw-text-amber-400">•</span>
-          Файл должен быть в формате .xlsx или .txt
-        </li>
-        <li class="tw-flex tw-items-start tw-gap-2">
-          <span class="tw-text-amber-400">•</span>
-          Каждый трек-код на отдельной строке
-        </li>
-      </ul>
-    </div>
+    </section>
   </div>
 </template>
 
-<style scoped>
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease-out;
+<script setup lang="ts">
+definePageMeta({
+  layout: 'admin'
+})
+
+import { useToast } from '~/composables/useToast'
+const toast = useToast()
+const api = useApi()
+
+const isDragging = ref(false)
+const uploading = ref(false)
+const progress = ref(0)
+const importComplete = ref(false)
+const importedCount = ref(0)
+const fileInput = ref<HTMLInputElement | null>(null)
+
+const handleFileSelect = (e: any) => {
+  const file = e.target.files[0]
+  if (file) uploadFile(file)
 }
 
-@keyframes fadeIn {
+const handleDrop = (e: DragEvent) => {
+  isDragging.value = false
+  const file = e.dataTransfer?.files[0]
+  if (file) uploadFile(file)
+}
+
+const uploadFile = async (file: File) => {
+  uploading.value = true
+  progress.value = 50 // Mocking progress visually
+
+  const targetStatus = 'ARRIVED_BRANCH';
+
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('targetStatus', targetStatus)
+
+  try {
+    const { data } = await api.tracking.importExcel(formData)
+    progress.value = 100
+
+    setTimeout(() => {
+      uploading.value = false
+      importComplete.value = true
+      importedCount.value = data?.updatedCount || 0
+      toast.success('Данные успешно импортированы')
+    }, 500)
+  } catch (err: any) {
+    uploading.value = false
+    const msg = err.response?.data?.message || 'Произошла ошибка при импорте';
+    toast.error(msg, { position: 'top-center' })
+  }
+}
+
+const resetImport = () => {
+  importComplete.value = false
+  progress.value = 0
+  importedCount.value = 0
+}
+</script>
+
+<style scoped>
+.import-center {
+  padding: 0;
+  max-width: 1000px;
+  margin: 0 auto;
+  color: #fff;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px);
   }
 
   to {
@@ -191,7 +165,262 @@ const uploadFile = async () => {
   }
 }
 
-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
+.page-header {
+  margin-bottom: 24px;
+}
+
+.title-section h1 {
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0;
+  color: #f8fafc;
+}
+
+.subtitle {
+  color: #94a3b8;
+  font-size: 14px;
+  margin-top: 6px;
+}
+
+.glass-card {
+  background: #161824;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.upload-area {
+  min-height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border: 2px dashed rgba(255, 255, 255, 0.1);
+  margin-bottom: 24px;
+  transition: all 0.3s;
+  border-radius: 12px;
+  background: #161824;
+}
+
+.upload-area.dragging {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.05);
+  transform: scale(1.01);
+}
+
+.upload-icon {
+  font-size: 48px;
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.upload-icon.taraz {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.upload-content h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #f8fafc;
+}
+
+.upload-content p {
+  font-size: 14px;
+  color: #94a3b8;
+  margin-bottom: 24px;
+}
+
+.hidden-input {
+  display: none;
+}
+
+.select-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.select-btn:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+}
+
+.progress-container {
+  width: 100%;
+  max-width: 400px;
+  padding: 40px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(59, 130, 246, 0.2);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.progress-bar-bg {
+  height: 8px;
+  background: #1e2130;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #3b82f6;
+  transition: width 0.3s;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.success-state {
+  padding: 40px;
+}
+
+.success-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  animation: bounce 1s infinite alternate;
+}
+
+@keyframes bounce {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.1);
+  }
+}
+
+.success-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.view-btn {
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: #3b82f6;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.view-btn:hover {
+  background: #2563eb;
+}
+
+.retry-btn {
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: #1e2130;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.retry-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.limit-warning {
+  display: flex;
+  gap: 16px;
+  padding: 16px 20px;
+  align-items: center;
+  border-left: 4px solid #f59e0b;
+  margin-bottom: 32px;
+}
+
+.l-icon {
+  font-size: 24px;
+}
+
+.l-txt strong {
+  display: block;
+  font-size: 14px;
+  color: #fbbf24;
+}
+
+.l-txt p {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 4px 0 0;
+}
+
+.guide-section h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #f8fafc;
+}
+
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.guide-item {
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.g-num {
+  font-size: 24px;
+  font-weight: 800;
+  color: #3b82f6;
+  opacity: 0.5;
+}
+
+.guide-item p {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .guide-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -61,7 +61,7 @@
                 <h2>Импорт завершен!</h2>
                 <p>Успешно обработано массовое обновление трек-кодов</p>
                 <div class="success-actions">
-                    <router-link to="/superAdmin/tracks" class="view-btn">Перейти к товарам</router-link>
+                    <router-link to="/superAdmin" class="view-btn">Перейти к списку</router-link>
                     <button class="retry-btn" @click="resetImport">Загрузить еще</button>
                 </div>
             </div>

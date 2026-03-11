@@ -149,8 +149,8 @@ onUnmounted(() => {
         <!-- Header -->
         <div class="cargo-header">
             <div class="header-left">
-                <h1 class="cargo-title">Shipment Intake Session</h1>
-                <span class="session-badge active">ACTIVE</span>
+                <h1 class="cargo-title">Приём товаров</h1>
+                <span class="session-badge active">АКТИВНА</span>
             </div>
 
             <div class="header-right">
@@ -161,7 +161,7 @@ onUnmounted(() => {
                         <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                     </svg>
                     <span v-if="sending">Отправка...</span>
-                    <span v-else>Send to Telegram</span>
+                    <span v-else>Отправить в Telegram</span>
                 </button>
                 <div class="header-icons">
                     <button class="icon-btn">
@@ -183,14 +183,14 @@ onUnmounted(() => {
         <!-- Process New Item Card -->
         <div class="process-card">
             <div class="process-header">
-                <h2>Process New Item</h2>
-                <p class="process-subtitle">Scan barcodes and record weights for the current cargo batch.</p>
+                <h2>Обработка нового товара</h2>
+                <p class="process-subtitle">Отсканируйте штрих-код и укажите вес товара.</p>
             </div>
 
             <form @submit.prevent="handleSubmit" class="process-form">
                 <div class="form-row">
                     <div class="input-group track-input-group">
-                        <label>Track Code (Barcode)</label>
+                        <label>Штрих-код (Трек)</label>
                         <div class="input-wrapper">
                             <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
@@ -199,21 +199,21 @@ onUnmounted(() => {
                                 </path>
                             </svg>
                             <input ref="trackCodeInput" v-model="trackCode" type="text"
-                                placeholder="Scan or Enter Code..." autofocus />
-                            <span class="auto-next-badge">AUTO-NEXT</span>
+                                placeholder="Отсканируйте код..." autofocus />
+                            <span class="auto-next-badge">АВТО-СЛЕД</span>
                         </div>
                     </div>
 
                     <div class="input-group weight-input-group">
-                        <label>Weight (kg)</label>
+                        <label>Вес (кг)</label>
                         <input v-model="weight" type="number" step="0.01" min="0" placeholder="0.00" />
                     </div>
 
                     <button type="submit" class="add-btn" :disabled="addingItem || !trackCode.trim()">
                         <span v-if="addingItem" class="btn-spinner"></span>
                         <template v-else>
-                            ADD
-                            <small>← ENTER</small>
+                            ДОБАВИТЬ
+                            <small>← ВВОД</small>
                         </template>
                     </button>
                 </div>
@@ -224,15 +224,15 @@ onUnmounted(() => {
         <div class="session-card">
             <div class="session-header">
                 <div class="session-title-row">
-                    <h3>SESSION HISTORY</h3>
-                    <span class="item-count">{{ sessionItems.length }} Items</span>
+                    <h3>ИСТОРИЯ СЕССИИ</h3>
+                    <span class="item-count">{{ sessionItems.length }} товаров</span>
                 </div>
                 <button class="clear-btn" @click="clearSession" v-if="sessionItems.length > 0">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                     </svg>
-                    Clear Session
+                    Очистить сессию
                 </button>
             </div>
 
@@ -240,10 +240,10 @@ onUnmounted(() => {
                 <table class="session-table">
                     <thead>
                         <tr>
-                            <th width="15%">TIME</th>
-                            <th width="50%">TRACK CODE</th>
-                            <th width="20%">WEIGHT</th>
-                            <th width="15%" class="text-right">ACTIONS</th>
+                            <th width="15%">ВРЕМЯ</th>
+                            <th width="50%">ТРЕК-КОД</th>
+                            <th width="20%">ВЕС</th>
+                            <th width="15%" class="text-right">ДЕЙСТВИЯ</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -252,11 +252,11 @@ onUnmounted(() => {
                             <td class="time-td">{{ formatTime(item.time) }}</td>
                             <td class="code-td">
                                 <span class="code-text">{{ item.trackCode }}</span>
-                                <span v-if="item.status === 'error'" class="error-badge">ERR</span>
+                                <span v-if="item.status === 'error'" class="error-badge">ОШИБКА</span>
                                 <span v-if="item.errorMsg" class="error-msg">{{ item.errorMsg }}</span>
                                 <!-- Optional: Status badge like "AIR" or "SEA" could go here if available -->
                             </td>
-                            <td class="weight-td">{{ item.weight > 0 ? item.weight.toFixed(2) + ' kg' : '—' }}</td>
+                            <td class="weight-td">{{ item.weight > 0 ? item.weight.toFixed(2) + ' кг' : '—' }}</td>
                             <td class="action-td text-right">
                                 <button class="delete-item-btn" @click="removeItem(item.id)" title="Удалить">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -271,7 +271,7 @@ onUnmounted(() => {
 
                         <tr v-if="sessionItems.length === 0" class="empty-row">
                             <td colspan="4" class="empty-cell">
-                                Scanned items will appear here
+                                Отсканированные товары появятся здесь
                             </td>
                         </tr>
                     </tbody>
@@ -280,8 +280,8 @@ onUnmounted(() => {
 
             <!-- Total -->
             <div class="session-total">
-                <span class="total-label">SESSION TOTAL WEIGHT</span>
-                <span class="total-value">{{ totalWeight.toFixed(2) }} kg</span>
+                <span class="total-label">ОБЩИЙ ВЕС СЕССИИ</span>
+                <span class="total-value">{{ totalWeight.toFixed(2) }} кг</span>
             </div>
         </div>
     </div>

@@ -10,8 +10,8 @@
                     </svg>
                 </div>
                 <div class="logo-text">
-                    <span class="title">Logistics Admin</span>
-                    <span class="subtitle">Warehouse Node 01</span>
+                    <span class="title">Админ-панель</span>
+                    <span class="subtitle">Управление филиалом</span>
                 </div>
                 <!-- Close btn for mobile -->
                 <button class="mobile-close-btn" @click="menuOpen = false">
@@ -30,7 +30,7 @@
                         <rect x="14" y="14" width="7" height="7"></rect>
                         <rect x="3" y="14" width="7" height="7"></rect>
                     </svg>
-                    <span>Dashboard</span>
+                    <span>Рабочий стол</span>
                 </router-link>
 
                 <router-link to="/admin/cargo" class="nav-link" active-class="active" @click="menuOpen = false">
@@ -41,17 +41,10 @@
                         <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                         <line x1="12" y1="22.08" x2="12" y2="12"></line>
                     </svg>
-                    <span>Cargo Processing</span>
+                    <span>Принять товары</span>
                 </router-link>
 
-                <router-link to="/admin/new-receipts" class="nav-link" active-class="active" @click="menuOpen = false">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="21 8 21 21 3 21 3 8"></polyline>
-                        <rect x="1" y="3" width="22" height="5"></rect>
-                        <line x1="10" y1="12" x2="14" y2="12"></line>
-                    </svg>
-                    <span>Inventory</span>
-                </router-link>
+
 
                 <router-link to="/admin/import" class="nav-link" active-class="active" @click="menuOpen = false">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -59,7 +52,7 @@
                         <polyline points="17 8 12 3 7 8"></polyline>
                         <line x1="12" y1="3" x2="12" y2="15"></line>
                     </svg>
-                    <span>Import Data</span>
+                    <span>Импорт данных</span>
                 </router-link>
 
                 <router-link to="/admin/history" class="nav-link" active-class="active" @click="menuOpen = false">
@@ -68,7 +61,7 @@
                         <line x1="12" y1="20" x2="12" y2="4"></line>
                         <line x1="6" y1="20" x2="6" y2="14"></line>
                     </svg>
-                    <span>Reports & History</span>
+                    <span>История сканов</span>
                 </router-link>
             </nav>
 
@@ -77,7 +70,7 @@
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path>
                     </svg>
-                    <span>Logout</span>
+                    <span>Выйти</span>
                 </button>
             </div>
         </aside>
@@ -96,7 +89,7 @@
                         <line x1="3" y1="18" x2="21" y2="18"></line>
                     </svg>
                 </button>
-                <div class="topbar-title">Cargo System</div>
+                <div class="topbar-title">Панель Управления</div>
             </header>
 
             <main class="content-area">

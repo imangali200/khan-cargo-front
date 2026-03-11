@@ -19,70 +19,88 @@
         <!-- Dynamic Stats Grid -->
         <div class="stats-grid">
             <div class="glass-card stat-item">
-                <div class="card-icon cyan">📦</div>
+                <div class="card-icon cyan">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                        </path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                </div>
                 <div class="card-info">
                     <span class="stat-value">{{ dashboardStats?.totalAcceptedToday || 0 }}</span>
                     <span class="stat-label">Принято сегодня</span>
                 </div>
-                <div class="chart-mini cyan"></div>
             </div>
             <div class="glass-card stat-item">
-                <div class="card-icon violet">🔄</div>
+                <div class="card-icon violet">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.92-10.27l-3.42-3.41"></path>
+                        <line x1="12" y1="2" x2="12" y2="12"></line>
+                    </svg>
+                </div>
                 <div class="card-info">
                     <span class="stat-value">{{ dashboardStats?.inProcessing || 0 }}</span>
                     <span class="stat-label">В обработке</span>
                 </div>
-                <div class="chart-mini violet"></div>
             </div>
             <div class="glass-card stat-item">
-                <div class="card-icon amber">🚚</div>
+                <div class="card-icon amber">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M3 17h1v4H3v-4zM7 17h1v4H7v-4zM11 17h1v4h-1v-4zM15 17h1v4h-1v-4zM19 17h1v4h-1v-4zM3 13V9a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2zM7 3h10v4H7V3z">
+                        </path>
+                    </svg>
+                </div>
                 <div class="card-info">
                     <span class="stat-value">{{ dashboardStats?.totalActive || 0 }}</span>
                     <span class="stat-label">Всего товаров</span>
                 </div>
-                <div class="chart-mini amber"></div>
             </div>
         </div>
 
         <!-- Main Actions Navigation -->
         <div class="actions-grid">
-            <router-link to="/admin/new-receipts" class="glass-card action-card group cyan">
+            <router-link to="/admin/cargo" class="glass-card action-card group">
                 <div class="action-icon">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                        </path>
                     </svg>
                 </div>
                 <div class="action-details">
                     <h3>Принять товары</h3>
                     <p>Сканирование и регистрация новых прибытий</p>
                 </div>
-                <div class="arrow">→</div>
             </router-link>
 
-            <router-link to="/admin/history" class="glass-card action-card group violet">
+            <router-link to="/admin/history" class="glass-card action-card group">
                 <div class="action-icon">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
                 </div>
                 <div class="action-details">
                     <h3>История сканов</h3>
                     <p>Просмотр логов и последних действий</p>
                 </div>
-                <div class="arrow">→</div>
             </router-link>
 
-            <router-link to="/admin/import" class="glass-card action-card group amber">
+            <router-link to="/admin/import" class="glass-card action-card group">
                 <div class="action-icon">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
                     </svg>
                 </div>
                 <div class="action-details">
                     <h3>Импорт данных</h3>
                     <p>Загрузка Excel файлов со статусами</p>
                 </div>
-                <div class="arrow">→</div>
             </router-link>
         </div>
 
@@ -101,7 +119,8 @@
                         <span class="activity-desc">Статус: {{ item.currentStatus }}</span>
                     </div>
                 </div>
-                <div v-if="recentItems.length === 0" class="tw-text-white/50 tw-text-sm">Нет активности</div>
+                <div v-if="recentItems.length === 0" class="tw-text-white/50 tw-text-sm" style="color: #94a3b8">Нет
+                    активности</div>
             </div>
         </section>
     </div>
@@ -139,10 +158,11 @@ onMounted(() => {
 
 <style scoped>
 .admin-dashboard {
-    padding: 20px;
+    padding: 0;
     max-width: 1000px;
     margin: 0 auto;
-    color: #fff;
+    color: #e2e8f0;
+    font-family: 'Inter', -apple-system, sans-serif;
 }
 
 .animate-slide-up {
@@ -171,95 +191,101 @@ onMounted(() => {
 .welcome-section .badge {
     display: inline-block;
     padding: 4px 12px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(59, 130, 246, 0.15);
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     margin-bottom: 12px;
-    color: #00d2ff;
+    color: #3b82f6;
 }
 
 .welcome-section h1 {
     font-size: 32px;
-    font-weight: 900;
+    font-weight: 800;
     margin: 0 0 8px;
-    letter-spacing: -1px;
+    color: #f8fafc;
 }
 
 .subtitle {
-    color: rgba(255, 255, 255, 0.6);
+    color: #94a3b8;
     margin: 0;
+    font-size: 14px;
 }
 
 .highlight {
-    color: #fff;
+    color: #f8fafc;
     font-weight: 700;
 }
 
 .header-stats .h-stat {
-    background: rgba(255, 255, 255, 0.05);
+    background: #161824;
     padding: 12px 20px;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     flex-direction: column;
 }
 
 .h-stat .label {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    color: #94a3b8;
 }
 
 .h-stat .value {
-    font-size: 18px;
-    font-weight: 800;
+    font-size: 16px;
+    font-weight: 700;
+    color: #f8fafc;
 }
 
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    gap: 24px;
     margin-bottom: 32px;
 }
 
 .glass-card {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px;
+    background: #161824;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
 }
 
 .stat-item {
-    padding: 4px;
+    padding: 24px;
     display: flex;
     align-items: center;
-    gap: 16px;
-    position: relative;
-    overflow: hidden;
-    padding-right: 20px;
+    gap: 20px;
 }
 
 .card-icon {
     width: 56px;
     height: 56px;
-    border-radius: 20px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
-    margin: 10px;
+    flex-shrink: 0;
+}
+
+.card-icon svg {
+    width: 24px;
+    height: 24px;
+    color: white;
 }
 
 .card-icon.cyan {
-    background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+    background: #3b82f6;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
 
 .card-icon.violet {
-    background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+    background: #8b5cf6;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
 }
 
 .card-icon.amber {
-    background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+    background: #f59e0b;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
 }
 
 .card-info {
@@ -270,94 +296,71 @@ onMounted(() => {
     font-size: 24px;
     font-weight: 800;
     display: block;
+    color: #f8fafc;
 }
 
 .stat-label {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.5);
+    color: #94a3b8;
     font-weight: 600;
 }
 
 .actions-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    gap: 24px;
     margin-bottom: 32px;
 }
 
 .action-card {
-    padding: 24px;
+    padding: 32px 24px;
     text-decoration: none;
-    color: #fff;
+    color: #f8fafc;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+    transition: all 0.2s;
+    height: 100%;
 }
 
 .action-card:hover {
-    transform: translateY(-8px);
-    border-color: rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.06);
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.1);
+    background: #1c1f2e;
 }
 
 .action-icon {
     width: 64px;
     height: 64px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.8);
-    transition: all 0.3s;
+    color: #94a3b8;
+    transition: all 0.2s;
 }
 
-.action-card.cyan:hover .action-icon {
-    background: #00d2ff;
-    color: #fff;
-    box-shadow: 0 10px 20px rgba(0, 210, 255, 0.3);
-}
-
-.action-card.violet:hover .action-icon {
-    background: #8e2de2;
-    color: #fff;
-    box-shadow: 0 10px 20px rgba(142, 45, 226, 0.3);
-}
-
-.action-card.amber:hover .action-icon {
-    background: #f2994a;
-    color: #fff;
-    box-shadow: 0 10px 20px rgba(242, 153, 74, 0.3);
+.action-card:hover .action-icon {
+    color: #f8fafc;
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .action-details h3 {
-    font-size: 18px;
-    font-weight: 800;
-    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    color: #f8fafc;
 }
 
 .action-details p {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.5);
+    color: #94a3b8;
     margin: 0;
-    line-height: 1.4;
-}
-
-.arrow {
-    position: absolute;
-    bottom: 24px;
-    right: 24px;
-    opacity: 0;
-    transform: translateX(-10px);
-    transition: all 0.3s;
-    font-size: 24px;
-}
-
-.action-card:hover .arrow {
-    opacity: 1;
-    transform: translateX(0);
+    line-height: 1.5;
 }
 
 .recent-activity {
@@ -368,73 +371,75 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
 
 .section-header h2 {
-    font-size: 20px;
-    font-weight: 800;
+    font-size: 18px;
+    font-weight: 700;
     margin: 0;
+    color: #f8fafc;
 }
 
 .view-all {
     font-size: 13px;
-    color: #00d2ff;
-    font-weight: 700;
+    color: #3b82f6;
+    font-weight: 600;
     text-decoration: none;
+}
+
+.view-all:hover {
+    text-decoration: underline;
 }
 
 .activity-list {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 }
 
 .activity-row {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 12px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.02);
+    padding: 16px;
+    border-radius: 12px;
+    background: #1e2130;
+    border: 1px solid rgba(255, 255, 255, 0.02);
 }
 
 .activity-indicator {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #00d2ff;
-    box-shadow: 0 0 10px #00d2ff;
+    background: #0ea5e9;
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+    flex-shrink: 0;
 }
 
 .activity-main {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
 }
 
 .activity-title {
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 600;
+    color: #f8fafc;
 }
 
 .activity-desc {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.4);
-}
-
-.activity-time {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.3);
-    font-weight: 600;
+    color: #64748b;
 }
 
 .mono {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    color: #fff;
-    background: rgba(255, 255, 255, 0.1);
+    font-size: 12px;
+    color: #f8fafc;
+    background: rgba(255, 255, 255, 0.05);
     padding: 2px 6px;
     border-radius: 4px;
 }
