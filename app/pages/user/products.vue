@@ -86,8 +86,8 @@ async function restoreTrack(productId: string) {
     toast.info('Функция восстановления в разработке')
 }
 
-function getProgress(product: TrackingItem) {
-    return [product.createAt, product.chinaArrivalDate, product.aicargoArrivalDate].filter(Boolean).length
+const getProgress = (product: any) => {
+    return [product.createAt, product.chinaArrivalDate, product.khanCargoArrivalDate].filter(Boolean).length
 }
 
 function formatDate(date: string | null) {
@@ -143,10 +143,11 @@ onMounted(async () => {
                     <div class="progress-bar">
                         <div class="bar-fill" :style="{ width: (getProgress(product) * 33.3) + '%' }"></div>
                     </div>
-                    <div class="steps">
-                        <div class="step" :class="{ active: !!product.createAt }">Зарегистрирован</div>
+                    <div class="tracking-steps">
+                        <div class="step" :class="{ active: !!product.createAt }">Рег</div>
                         <div class="step" :class="{ active: !!product.chinaArrivalDate }">Китай</div>
-                        <div class="step" :class="{ active: !!product.aicargoArrivalDate }">Пункт</div>
+                        <div class="step" :class="{ active: !!product.khanCargoArrivalDate }">Пункт</div>
+                        <div class="step" :class="{ active: product.currentStatus === 'PICKED_UP' }">Выдан</div>
                     </div>
                 </div>
             </div>

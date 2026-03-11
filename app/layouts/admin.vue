@@ -66,12 +66,21 @@
             </nav>
 
             <div class="sidebar-footer">
-                <button class="nav-link logout-btn" @click="logout">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path>
-                    </svg>
-                    <span>Выйти</span>
-                </button>
+                <div class="user-profile">
+                    <div class="avatar-placeholder">{{ userInitials }}</div>
+                    <div class="user-info">
+                        <span class="user-name">{{ profileData?.name || 'Админ' }} {{ profileData?.lastName || ''
+                            }}</span>
+                        <span class="user-role">{{ roleLabel }}</span>
+                    </div>
+                    <button @click="logout" class="logout-icon-btn" title="Выйти">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </aside>
 
@@ -100,13 +109,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import type { User } from '~/types'
 
+const api = useApi()
 const token = useCookie('token')
 const refreshToken = useCookie('refreshToken')
 const router = useRouter()
 const menuOpen = ref(false)
+const profileData = ref<User | null>(null)
+
+const userInitials = computed(() => {
+    const n = profileData.value?.name?.charAt(0)?.toUpperCase() || ''
+    const l = profileData.value?.lastName?.charAt(0)?.toUpperCase() || ''
+    return n + l || 'A'
+})
+
+const roleLabel = computed(() => {
+    const role = profileData.value?.role?.toLowerCase()
+    if (role === 'admin') return 'Администратор'
+    return 'Менеджер'
+})
 
 function logout() {
     token.value = null
@@ -114,24 +138,29 @@ function logout() {
     menuOpen.value = false
     router.push('/auth/login')
 }
+
+onMounted(async () => {
+    try {
+        const { data } = await api.profile.getProfile()
+        profileData.value = data
+    } catch { }
+})
 </script>
 
 <style scoped>
 .admin-app {
     display: flex;
     min-height: 100vh;
-    background-color: #0f111a;
-    /* Very dark rich blue background, matching screenshot */
-    color: #e2e8f0;
+    background-color: #0d0d0d;
+    color: #e6edf3;
     font-family: 'Inter', -apple-system, sans-serif;
 }
 
 /* Sidebar */
 .sidebar {
     width: 260px;
-    background-color: #161824;
-    /* Sidebar background */
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: #161618;
+    border-right: 1px solid #27272a;
     display: flex;
     flex-direction: column;
     position: fixed;
@@ -230,27 +259,89 @@ function logout() {
     background-color: rgba(255, 255, 255, 0.03);
 }
 
-.nav-link.active {
-    color: white;
-    background: #3b82f6;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+.nav-link.router-link-active {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+    box-shadow: none;
 }
 
-.nav-link.active .nav-icon {
+.nav-link.router-link-active .nav-icon {
     opacity: 1;
 }
 
 .sidebar-footer {
-    padding: 16px;
+    padding: 24px 16px;
+    border-top: 1px solid #27272a;
     margin-top: auto;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.logout-btn {
-    justify-content: flex-start;
+.user-profile {
+    display: flex;
+    align-items: center;
+    background-color: #1e1e20;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #27272a;
+    gap: 10px;
 }
 
-.logout-btn:hover {
+.avatar-placeholder {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #f7cbba;
+    color: #c2410c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+.user-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-role {
+    font-size: 10px;
+    color: #71717a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.logout-icon-btn {
+    background: none;
+    border: none;
+    color: #71717a;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.logout-icon-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.logout-icon-btn:hover {
     color: #ef4444;
     background-color: rgba(239, 68, 68, 0.1);
 }

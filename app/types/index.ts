@@ -80,7 +80,7 @@ export interface TrackingItem {
     weight?: number;
     declaredValue?: number;
     chinaArrivalDate?: string;
-    aicargoArrivalDate?: string;
+    khanCargoArrivalDate?: string;
     deliveryDate?: string;
     isTelegramNotified: boolean;
     createAt: string;

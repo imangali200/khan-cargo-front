@@ -43,10 +43,6 @@
         <span class="val">{{ stats.atWarehouse }}</span>
         <span class="lab">На складе</span>
       </div>
-      <div class="mini-stat glass-card emerald">
-        <span class="val">{{ stats.completed }}</span>
-        <span class="lab">Выдано</span>
-      </div>
     </div>
 
     <!-- History Data Table -->
@@ -65,7 +61,6 @@
               <th>Статус</th>
               <th>🇨🇳 Китай</th>
               <th>📦 Склад</th>
-              <th>✅ Выдан</th>
             </tr>
           </thead>
           <tbody>
@@ -84,8 +79,7 @@
                 </span>
               </td>
               <td class="date-td">{{ formatDate(item.chinaArrivalDate) }}</td>
-              <td class="date-td text-cyan">{{ formatDate(item.aicargoArrivalDate) }}</td>
-              <td class="date-td text-emerald">{{ formatDate(item.deliveryDate) }}</td>
+              <td class="date-td text-cyan">{{ formatDate(item.khanCargoArrivalDate) }}</td>
             </tr>
             <tr v-if="products.length === 0 && !loading">
               <td colspan="6" class="empty-state">
@@ -125,23 +119,31 @@ const perPage = 10
 const totalPages = ref(1)
 const loading = ref(false)
 const totalItems = ref(0)
-const dashboardStats = ref(null as DashboardStats | null)
+const dashboardStats = ref<any[]>([])
+const actionLoading = ref<number | null>(null)
 
 const tabs = [
   { label: 'Все', value: 'all' },
   { label: '🇨🇳 В Китае', value: 'china' },
-  { label: '📦 На складе', value: 'warehouse' },
-  { label: '✅ Выдано', value: 'completed' }
+  { label: '📦 На складе', value: 'warehouse' }
 ]
 
 const products = ref<TrackingItem[]>([])
 
-const stats = computed(() => ({
-  total: dashboardStats.value?.totalActive || 0,
-  inChina: 0,
-  atWarehouse: dashboardStats.value?.inProcessing || 0,
-  completed: dashboardStats.value?.totalAcceptedToday || 0
-}))
+const stats = computed(() => {
+  const getCount = (st: string) => dashboardStats.value?.find((x: any) => x.status === st)?.count || 0
+  const cChina = getCount('ARRIVED_CHINA_WAREHOUSE')
+  const cBranch = getCount('ARRIVED_BRANCH')
+  const cPicked = getCount('PICKED_UP')
+  const cReg = getCount('REGISTERED')
+
+  return {
+    total: cChina + cBranch + cPicked + cReg,
+    inChina: cChina,
+    atWarehouse: cBranch,
+    completed: cPicked
+  }
+})
 
 const loadData = async () => {
   loading.value = true
@@ -170,7 +172,7 @@ const loadData = async () => {
 const loadDashboard = async () => {
   try {
     const { data } = await api.tracking.dashboard()
-    dashboardStats.value = data
+    dashboardStats.value = Array.isArray(data) ? data : []
   } catch { }
 }
 
@@ -196,7 +198,13 @@ const getStatusClass = (item: TrackingItem) => {
 
 const formatDate = (date: string | null | undefined) => {
   if (!date) return '—'
-  return new Date(date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return new Date(date).toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
 watch([activeTab, searchQuery], () => {
@@ -543,7 +551,9 @@ onMounted(() => {
   .premium-table th:nth-child(5),
   .premium-table td:nth-child(5),
   .premium-table th:nth-child(6),
-  .premium-table td:nth-child(6) {
+  .premium-table td:nth-child(6),
+  .premium-table th:nth-child(7),
+  .premium-table td:nth-child(7) {
     display: none;
   }
 }

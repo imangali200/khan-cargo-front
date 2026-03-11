@@ -25,7 +25,7 @@
             <button @click="activeTab = 'taraz'" :class="['mode-tab', { active: activeTab === 'taraz' }]">
                 <span class="icon">📦</span>
                 <div class="txt">
-                    <span class="main">AiCargo</span>
+                    <span class="main">Khan Cargo</span>
                     <span class="sub">Склад выдачи</span>
                 </div>
             </button>

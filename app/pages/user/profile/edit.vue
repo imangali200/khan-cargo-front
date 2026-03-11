@@ -17,9 +17,6 @@ const saving = ref(false)
 const editData = ref({
     name: '',
     lastName: '',
-    telegramUsername: '',
-    email: '',
-    branchId: null as number | null,
 })
 
 const avatarFile = ref<File | null>(null)
@@ -31,9 +28,6 @@ async function loadProfile() {
         profile.value = data
         editData.value.name = data.name || ''
         editData.value.lastName = data.lastName || ''
-        editData.value.telegramUsername = data.telegramUsername || ''
-        editData.value.email = data.email || ''
-        editData.value.branchId = data.branchId || null
         if (data.profilePhotoUrl) {
             avatarPreview.value = data.profilePhotoUrl
         }
@@ -63,9 +57,6 @@ async function saveProfile() {
         await api.profile.updateProfile({
             name: editData.value.name,
             lastName: editData.value.lastName,
-            telegramUsername: editData.value.telegramUsername || undefined,
-            email: editData.value.email || undefined,
-            branchId: editData.value.branchId || undefined,
         })
 
         if (avatarFile.value) {
@@ -154,27 +145,6 @@ onMounted(() => {
                 <label class="field-label">ФАМИЛИЯ</label>
                 <div class="input-wrap">
                     <input v-model="editData.lastName" type="text" placeholder="Введите фамилию" />
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="field-label">TELEGRAM USERNAME</label>
-                <div class="input-wrap">
-                    <input v-model="editData.telegramUsername" type="text" placeholder="Введите username" />
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="field-label">EMAIL</label>
-                <div class="input-wrap">
-                    <input v-model="editData.email" type="email" placeholder="Введите email" />
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="field-label">ID ФИЛИАЛА</label>
-                <div class="input-wrap">
-                    <input v-model.number="editData.branchId" type="number" placeholder="Введите ID филиала" />
                 </div>
             </div>
 

@@ -12,7 +12,7 @@ const products = ref<Product[]>([
         productName: 'Старый заказ (Кроссовки)',
         client_registered: new Date(Date.now() - 30 * 86400000).toISOString(),
         china_warehouse: new Date(Date.now() - 25 * 86400000).toISOString(),
-        aicargo: new Date(Date.now() - 20 * 86400000).toISOString(),
+        khanCargo: new Date(Date.now() - 20 * 86400000).toISOString(),
         given_to_client: new Date(Date.now() - 15 * 86400000).toISOString()
     },
     {
@@ -21,7 +21,7 @@ const products = ref<Product[]>([
         productName: 'Чехол для iPhone',
         client_registered: new Date(Date.now() - 40 * 86400000).toISOString(),
         china_warehouse: null,
-        aicargo: null,
+        khanCargo: null,
         given_to_client: null
     }
 ])
@@ -31,7 +31,7 @@ const perPage = 10
 
 async function restoreProduct(productId: string) {
     if (!confirm(`Восстановить трек ${productId}?`)) return
-    
+
     products.value = products.value.filter(p => p.productId !== productId)
     toast.success('Трек восстановлен и перемещен в активные')
 }
@@ -63,7 +63,7 @@ onMounted(() => {
             <h1 class="tw-flex-1 tw-text-2xl tw-font-bold tw-text-white">🗄️ Архив</h1>
             <span
                 class="tw-px-4 tw-py-2 tw-bg-violet-500/20 tw-border tw-border-violet-500/30 tw-rounded-full tw-text-violet-400 tw-text-sm tw-font-semibold">{{
-                products.length }} треков</span>
+                    products.length }} треков</span>
         </div>
 
         <!-- Loading -->
@@ -139,7 +139,7 @@ onMounted(() => {
                         <tr v-for="product in paginatedProducts" :key="product.id"
                             class="tw-border-t tw-border-white/5 hover:tw-bg-white/[0.02] tw-transition-all">
                             <td class="tw-px-5 tw-py-4"><span class="tw-font-mono tw-font-semibold tw-text-white">{{
-                                    product.productId.toUpperCase() }}</span></td>
+                                product.productId.toUpperCase() }}</span></td>
                             <td class="tw-px-5 tw-py-4 tw-text-white/70 tw-max-w-[200px] tw-truncate">{{
                                 product.productName || '—' }}</td>
                             <td class="tw-px-5 tw-py-4 tw-text-white/60">{{ formatDate(product.client_registered) }}

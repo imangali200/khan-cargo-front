@@ -41,17 +41,7 @@
                     <span class="stat-label">Складов</span>
                 </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon green">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                    </svg>
-                </div>
-                <div class="stat-body">
-                    <span class="stat-num">{{ tracksCount }}</span>
-                    <span class="stat-label">Треков</span>
-                </div>
-            </div>
+
             <div class="stat-card">
                 <div class="stat-icon orange">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -267,7 +257,7 @@ onMounted(async () => {
 /* Stats Row */
 .stats-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     margin-bottom: 40px;
 }

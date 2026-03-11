@@ -202,11 +202,11 @@ onMounted(() => {
 
             <div class="stats-row">
                 <div class="stat-box">
-                    <span class="stat-num">{{ myPosts.length || '124' }}</span>
+                    <span class="stat-num">{{ myPosts.length }}</span>
                     <span class="stat-label">ПОСТЫ</span>
                 </div>
                 <div class="stat-box">
-                    <span class="stat-num">{{ likedPosts.length || '1.2k' }}</span>
+                    <span class="stat-num">{{ likedPosts.length }}</span>
                     <span class="stat-label">ЛАЙКИ</span>
                 </div>
             </div>

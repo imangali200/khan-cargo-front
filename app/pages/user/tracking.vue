@@ -168,6 +168,12 @@ function formatStatusDate(dateStr?: string) {
     return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
 }
 
+function formatStatusTime(dateStr?: string) {
+    if (!dateStr) return ''
+    const d = new Date(dateStr)
+    return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+}
+
 watch(activeTab, (val) => {
     val === 'active' ? getProducts() : getArchiveProducts()
 })
@@ -282,7 +288,10 @@ onMounted(async () => {
                             <div class="milestone-point" :class="{ reached: getStatusStep(product) >= 2 }">
                                 <div class="dot"></div>
                                 <span class="label">Khan Cargo</span>
-                                <span class="date-label">{{ formatStatusDate(product.aicargoArrivalDate) }}</span>
+                                <p class="date-time">
+                                    <span class="date-label">{{ formatStatusDate(product.khanCargoArrivalDate) }}</span>
+                                    <span class="time-label">{{ formatStatusTime(product.khanCargoArrivalDate) }}</span>
+                                </p>
                             </div>
                         </div>
                     </div>

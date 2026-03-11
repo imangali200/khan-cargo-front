@@ -74,8 +74,8 @@
                 </span>
               </td>
               <td class="date-cell">{{ formatDate(item.chinaArrivalDate) }}</td>
-              <td class="date-cell">{{ formatDate(item.aicargoArrivalDate) }}</td>
-              <td class="date-cell">{{ formatDate(item.deliveryDate) }}</td>
+              <td class="date-cell text-cyan">{{ formatDate(item.khanCargoArrivalDate) }}</td>
+              <td class="date-cell text-emerald">{{ formatDate(item.deliveryDate) }}</td>
             </tr>
 
             <!-- Empty -->
